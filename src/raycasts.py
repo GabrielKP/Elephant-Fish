@@ -127,15 +127,14 @@ def updateRaycasts():
 
     ray = Raycast(our_wall_lines, COUNT_BINS_AGENTS, WALL_RAYS_WALLS, RADIUS_FIELD_OF_VIEW_AGENTS, RADIUS_FIELD_OF_VIEW_WALLS, MAX_VIEW_RANGE, COUNT_FISHES)
 
-    r1 = ray.getRays(extract_coordinates("data/sleap_1_diff1.h5", [b'head', b'center'], fish_to_extract=[0,1,2]), "data/raycast_data_diff1.csv")
-    r2 =ray.getRays(extract_coordinates("data/sleap_1_diff2.h5", [b'head', b'center'], fish_to_extract=[0,1,2]), "data/raycast_data_diff2.csv")
-    r3 = ray.getRays(extract_coordinates("data/sleap_1_diff3.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[:17000], "data/raycast_data_diff3.csv")
-    r4 = ray.getRays(extract_coordinates("data/sleap_1_diff4.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[120:], "data/raycast_data_diff4.csv")
-
-    r5 = ray.getRays(extract_coordinates("data/sleap_1_same1.h5", [b'head', b'center'], fish_to_extract=[0,1,2]), "data/raycast_data_same1.csv")
-    r6 = ray.getRays(extract_coordinates("data/sleap_1_same3.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[130:], "data/raycast_data_same3.csv")
-    r7 = ray.getRays(extract_coordinates("data/sleap_1_same4.h5", [b'head', b'center'], fish_to_extract=[0,1,2]), "data/raycast_data_same4.csv")
-    r8 = ray.getRays(extract_coordinates("data/sleap_1_same5.h5", [b'head', b'center'], fish_to_extract=[0,1,2]), "data/raycast_data_same5.csv")
+    r1 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff1.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[:500] )
+    r3 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff3.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[:17000] )
+    r2 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff2.h5", [b'head', b'center'], fish_to_extract=[0,1,2]) )
+    r4 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff4.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[120:] )
+    r5 = ray.getRays( extract_coordinates("data/sleap/sleap_1_same1.h5", [b'head', b'center'], fish_to_extract=[0,1,2]) )
+    r6 = ray.getRays( extract_coordinates("data/sleap/sleap_1_same3.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[130:] )
+    r7 = ray.getRays( extract_coordinates("data/sleap/sleap_1_same4.h5", [b'head', b'center'], fish_to_extract=[0,1,2]) )
+    r8 = ray.getRays( extract_coordinates("data/sleap/sleap_1_same5.h5", [b'head', b'center'], fish_to_extract=[0,1,2]) )
     rays = [ r1, r2, r3, r4, r5, r6, r7, r8 ]
 
     out1 = "data/raycastData/raycast1.npy"
@@ -150,8 +149,18 @@ def updateRaycasts():
 
     # Data preparation
     rpf = COUNT_BINS_AGENTS + WALL_RAYS_WALLS # rays per Fish
+    # Sort data correctly
     for i in range( len( outs ) ):
-        rays[i][:, ]
+        rayT = rays[i]
+        print( rayT.shape )
+        print( rayT )
+        nframes = rayT.shape[0]
+        newRay = np.empty( ( COUNT_FISHES, nframes, rpf ) )
+        for f in range( COUNT_FISHES ):
+            newRay[f] = rayT[:,f * rpf:( f + 1 ) * rpf]
+        print( newRay.shape )
+        print( newRay )
+        np.save( outs[i], newRay )
 
 def main():
     #Set variables
