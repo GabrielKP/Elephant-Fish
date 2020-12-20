@@ -152,14 +152,14 @@ def updateRaycasts():
     # Sort data correctly
     for i in range( len( outs ) ):
         rayT = rays[i]
-        print( rayT.shape )
-        print( rayT )
+        # print( rayT.shape )
+        # print( rayT )
         nframes = rayT.shape[0]
         newRay = np.empty( ( COUNT_FISHES, nframes, rpf ) )
         for f in range( COUNT_FISHES ):
             newRay[f] = rayT[:,f * rpf:( f + 1 ) * rpf]
-        print( newRay.shape )
-        print( newRay )
+        # print( newRay.shape )
+        # print( newRay )
         np.save( outs[i], newRay )
 
 def main():
