@@ -298,8 +298,7 @@ def convertAngle(lin_mov, angle):
         angle = angle - 2*np.pi
     elif angle > 1/2*np.pi:
         angle = np.pi - angle
-        lin_mov 
-    
+
     return lin_mov, angle
 
 def convertAngleBack(lin_mov, angle):
@@ -312,3 +311,55 @@ def convertAngleBack(lin_mov, angle):
     angle = angle % (2*np.pi)
 
     return lin_mov, angle
+
+
+def vectorLength( xs, ys ):
+    """
+    Computes the length of given vectors
+
+    Parameters
+    ----------
+    xs : array
+        array of x values, each row containing x value of a vector
+    ys : array
+        array of y values, each row containing y value of a vector
+
+    Returns
+    -------
+    length : np.array
+        returns one array with length of given vectors
+    """
+    # power, add and return square root
+    return np.sqrt( xs ** 2 + ys ** 2 )
+
+
+def vectorsUnitAngle( xs1, ys1, xs2, ys2 ):
+    """
+    Computes the angle as unit vector between 2 vectors
+
+    Parameters
+    ----------
+    xs1, xs2 : array
+        array of x values for first and second vector
+    ys1, ys2 : array
+        array of y values for first and second vector
+
+    Returns
+    -------
+    tuple : ndarray
+        array of angles given x and y values of positions on
+        the unit circle
+    """
+    # var = ( a * b ) / ( |a| * |b| )
+    # y = sin( angle ) = sin( arccos( ( a * b ) / ( |a| * |b| ) ) )
+    #                  = sin( arccos( var ) )
+    #                  = sqrt( 1 - var^2 )
+    # x = cos( angle ) = cos( arccos( ( a * b ) / ( |a| * |b| ) ) )
+    #                  = var
+    l1 = np.sqrt( xs1 ** 2 + ys1 ** 2 )
+    l2 = np.sqrt( xs2 ** 2 + ys2 ** 2 )
+    var = ( xs1 * xs2 + ys1 * ys2 ) / ( l1 * l2 )
+    var[np.isnan( var )] = 1    # if you have a vector which is 0, the resulting angle is 0 (1,0)
+    x = var
+    y = np.sqrt( 1 - var ** 2 )
+    return x, y
