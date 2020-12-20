@@ -254,14 +254,50 @@ def readStartposition(path):
 
 def getAngles( v1, v2 ):
     """
-    Takes 2 np.arrays with points treated as vectors
+    Computes Angles from 2 vectors
+
+    Parameters
+    ----------
+    v1, v2 : ndarray
+        vectors with x and y values representing vectors.
+        Has shape (n,2)
+
+    Returns
+    -------
+    angles : ndarray
+        array containing angles
     """
-    assert v1.shape == v2.shape
-    assert v1.shape[1] == 2
+    # https://stackoverflow.com/a/16544330
+    # dot product is proportional to cos
+    # determinant is proportional to sin
     dot = np.sum( v1 * v2, axis=1 )
     det = np.subtract( ( v1[:,0] * v2[:,1] ), ( v2[:,0] * v1[:,1] ) )
     angle = np.arctan2( det, dot )
     return angle % ( np.pi * 2 )
+
+
+def getAngles( xs1, ys1, xs2, ys2 ):
+    """
+    Computes Angles from x and y values representing vectors
+
+    Parameters
+    ----------
+    xs1, xs2, ys1, ys2 : ndarray
+        vectors with x and y values representing vectors.
+        Has shape (n,2)
+
+    Returns
+    -------
+    angles : ndarray
+        array containing angles
+    """
+    # https://stackoverflow.com/a/16544330
+    # dot product is proportional to cos
+    # determinant is proportional to sin
+    dot = xs1 * xs2 + ys1 * ys2
+    det = xs1 * ys2 - ys1 * xs2
+    angles = np.arctan2( det, dot )
+    return angles % ( np.pi * 2 )
 
 
 def getDistances( p1, p2 ):
@@ -350,16 +386,6 @@ def vectorsUnitAngle( xs1, ys1, xs2, ys2 ):
         array of angles given x and y values of positions on
         the unit circle
     """
-    # var = ( a * b ) / ( |a| * |b| )
-    # y = sin( angle ) = sin( arccos( ( a * b ) / ( |a| * |b| ) ) )
-    #                  = sin( arccos( var ) )
-    #                  = sqrt( 1 - var^2 )
-    # x = cos( angle ) = cos( arccos( ( a * b ) / ( |a| * |b| ) ) )
-    #                  = var
-    l1 = np.sqrt( xs1 ** 2 + ys1 ** 2 )
-    l2 = np.sqrt( xs2 ** 2 + ys2 ** 2 )
-    var = ( xs1 * xs2 + ys1 * ys2 ) / ( l1 * l2 )
-    var[np.isnan( var )] = 1    # if you have a vector which is 0, the resulting angle is 0 (1,0)
-    x = var
-    y = np.sqrt( 1 - var ** 2 )
-    return x, y
+    angles = getAngles( xs1, ys1, xs2, ys2 )
+    # Convert angle to unit vector positions and return
+    return np.cos( angles ), np.sin( angles )
