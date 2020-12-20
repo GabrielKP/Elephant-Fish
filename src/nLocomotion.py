@@ -4,9 +4,10 @@
 # For the center node, the distance relative to the centerpoint of the previos frame and
 # angle relative to the line between center and head point (orientation vector) of the
 # previos frame is saved.
+# For the head node, the distance to the new center is saved, and the angle of the vector
+# between the new orientation vector and the old orientation vector is saved.
 # For all other nodes, the distance to the new center point and the angle relative to the
-# line between the new center and new head point is saved. Thus, the head node always has
-# an angle of 0.
+# line between the new center and new head point is saved.
 # An angle is saved as x and y coordinate on the unit circle.
 # Due to that, the last 2 dimensions are organized as follows:
 # [:,:,0] == Distances
@@ -78,8 +79,8 @@ def trackData2nLoc( trackData ):
         ## 4. Distance and angle for head node
         out[f,:,0,0] = vectorLength( x_orivec_next, y_orivec_next )
 
-        # Angle between head and center is always 0 (1,0)
-        out[f,:,1,0], out[f,:,2,0] = 1.0, 0.0
+        # Angle between orientation vector current and orientation vector new
+        out[f,:,1,0], out[f,:,2,0] = vectorsUnitAngle( x_orivec_curr, y_orivec_curr, x_orivec_next, y_center_next )
 
         ## Set every other node in relation to orientation of center node
         for n in range( nnodes - 2 ):
