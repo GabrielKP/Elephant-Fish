@@ -282,9 +282,9 @@ def getAngles( xs1, ys1, xs2, ys2 ):
 
     Parameters
     ----------
-    xs1, xs2, ys1, ys2 : ndarray
+    xs1, xs2, ys1, ys2 : ndarray, int
         vectors with x and y values representing vectors.
-        Has shape (n,2)
+        Also can be scalars
 
     Returns
     -------
