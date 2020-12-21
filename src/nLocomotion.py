@@ -16,7 +16,7 @@
 
 import data_io
 import numpy as np
-from functions import vectorLength, vectorsUnitAngle
+from functions import getAngles, vectorLength, vectorsUnitAngle
 
 def trackData2nLoc( trackData ):
     """
@@ -96,12 +96,119 @@ def trackData2nLoc( trackData ):
     return out
 
 
-def nLoc2trackData():
-    pass
+def coordsFromLoc( oldCoords, locomotion ):
+    """
+    Computes new coordinates from oldCoords and locomotion
 
-trackData = data_io.lazytrackData( 1 )[1:2]
-print( trackData[0,0:2].shape )
-print( trackData[0,0:2] )
+    Parameters
+    ----------
+    oldCoords : ndarray
+        array containing x and y values for coordinates of a single time step:
+        (nfish, 2, nnodes)
+    locomotion : ndarray
+        array containing locomotion for single time step: (nfish, 3, nnodes)
+
+    Returns
+    -------
+    newCoords : ndarray
+        array conating x and y values for coordinates when moving from oldCoords
+        with locomotion: (nfish, 2, nnodes)
+    """
+    _, _, nnodes = oldCoords.shape
+    # no assertions because this gets called a thousand times
+    out = np.empty( oldCoords.shape )
+    ## 1. Compute new center position
+    x_head = oldCoords[:,0,0]
+    y_head = oldCoords[:,1,0]
+    x_center = oldCoords[:,0,1]
+    y_center = oldCoords[:,1,1]
+
+    x_orivec = x_head - x_center
+    y_orivec = y_head - y_center
+
+    # Compute angle to allocentric view (1,0)
+    ang_orivec = getAngles( 1, 0, x_orivec, y_orivec )
+    # print( x_orivec, y_orivec )
+    # print( ang_orivec )
+    # print( np.arctan( y_orivec / x_orivec ) )
+
+    # Get relative angle of movement
+    ang_relMov = getAngles( 1, 0, locomotion[:,1,1], locomotion[:,2,1] )
+
+    # Add angles together and compute new center location
+    ang_toNewCenter = ang_relMov + ang_orivec
+
+    out[:,0,1] = np.cos( ang_toNewCenter ) * locomotion[:,0,1] + x_center
+    out[:,1,1] = np.sin( ang_toNewCenter ) * locomotion[:,0,1] + y_center
+
+    # New Head location
+    ang_relOri = getAngles( 1, 0, locomotion[:,1,0], locomotion[:,2,0] )
+
+    # Add angles together and compute head location
+    ang_newOri = ang_relOri + ang_orivec
+
+    #                                                       new center location
+    out[:,0,0] = np.cos( ang_newOri ) * locomotion[:,0,0] + out[:,0,1]
+    out[:,1,0] = np.sin( ang_newOri ) * locomotion[:,0,0] + out[:,1,1]
+
+    # Iterate through rest of nodes
+    for n in range( 2, nnodes ):
+        # get angle relative to center node
+        ang_relNode = getAngles( 1, 0, locomotion[:,1,n], locomotion[:,2,n] )
+        ang_node = ang_relNode + ang_newOri
+        out[:,0,n] = np.cos( ang_node ) * locomotion[:,0,n] + out[:,0,1]
+        out[:,1,n] = np.sin( ang_node ) * locomotion[:,0,n] + out[:,1,1]
+
+    return out
+
+
+def nLoc2trackData( nLocomotion, startCoordinates ):
+    """
+    Converts nLocomotion to trackData given start coordinates
+
+    Parameters
+    ----------
+    nLocomotion : ndarray
+        array containing movement data between frames in form of (nfish, nframes - 1, 3, nnodes)
+    startCoordinates : ndarray
+        array containing start point coordinates in form of (nfish, 2, nnodes),
+        whereas [nfish, 0, nnodes] are the x values and [nfish, 1, nnodes] are the y values
+
+    Returns
+    -------
+    trackData : ndarray
+        Coordinates in form of (nfish, nframes, 2, nnodes)
+    """
+    # Input check and assertions
+    nfish, nframes, ncoords, nnodes = nLocomotion.shape
+    nframes += 1
+    assert ncoords == 3, "nLocomotion needs to be 3 in second to last dimension!"
+    nfish2, ncoords2, nnodes2 = startCoordinates.shape
+    assert ncoords2 == 2, "startCoordinates need to have x and y values seperate"
+    assert nfish == nfish2, "Different amount of fish for nLocomotion and startCoordinates"
+    assert nnodes == nnodes2, "Different amount of nodes for nLocomotion and startCoordinates"
+
+    # Create Output
+    out = np.empty( (nfish, nframes, 2, nnodes) )
+
+    # Set startpoints
+    out[:,0] = startCoordinates
+
+    # Iterate and compute coordinates
+    for i in range( nframes - 1 ):
+        out[:,i+1] = coordsFromLoc( out[:,i], nLocomotion[:,i] )
+
+    return out
+
+
+trackData = data_io.lazytrackData( 1 )[:,0:3,:,0:2]
+print( trackData.shape )
+print( trackData )
 nloc = trackData2nLoc( trackData )
-print( nloc[0,0].shape )
-print( nloc[0,0] )
+print( nloc.shape )
+print( nloc )
+print( " ")
+startpos =  trackData[:,0]
+newTrackData = nLoc2trackData( nloc, startpos )
+print( newTrackData.shape )
+print( newTrackData )

@@ -389,3 +389,9 @@ def vectorsUnitAngle( xs1, ys1, xs2, ys2 ):
     angles = getAngles( xs1, ys1, xs2, ys2 )
     # Convert angle to unit vector positions and return
     return np.cos( angles ), np.sin( angles )
+
+xs = np.array( [-20.98406982, 23.03155518, 17.26281738] )
+ys = np.array( [17.4569397, -3.41607666, 12.17980957] )
+
+print( getAngles( 1, 0, xs, ys ) )
+print( np.arctan( ys / xs ) )
