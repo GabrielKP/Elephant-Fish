@@ -14,7 +14,6 @@
 # [:,:,1] == Angle, x coordinate on unit circle
 # [:,:,2] == Angle, y coordinate on unit circle
 
-import data_io
 import numpy as np
 from functions import getAngles, vectorLength, vectorsUnitAngle
 
@@ -200,15 +199,19 @@ def nLoc2trackData( nLocomotion, startCoordinates ):
 
     return out
 
+def main():
+    # trackData = data_io.lazytrackData( 1 )[:,0:3,:,0:2]
+    # print( trackData.shape )
+    # print( trackData )
+    # nloc = trackData2nLoc( trackData )
+    # print( nloc.shape )
+    # print( nloc )
+    # print( " ")
+    # startpos =  trackData[:,0]
+    # newTrackData = nLoc2trackData( nloc, startpos )
+    # print( newTrackData.shape )
+    # print( newTrackData )
+    pass
 
-trackData = data_io.lazytrackData( 1 )[:,0:3,:,0:2]
-print( trackData.shape )
-print( trackData )
-nloc = trackData2nLoc( trackData )
-print( nloc.shape )
-print( nloc )
-print( " ")
-startpos =  trackData[:,0]
-newTrackData = nLoc2trackData( nloc, startpos )
-print( newTrackData.shape )
-print( newTrackData )
+if __name__ == "__main__":
+    main()

@@ -16,6 +16,9 @@ same4 = "E:\\VideosSWP\\same_4_edit.avi"
 same5 = "E:\\VideosSWP\\same_5_edit.avi"
 diff1_out = 'C:/Users/Gabriel/Videos/diff_1_tracks.avi'
 diff2_out = 'C:/Users/Gabriel/Videos/diff_2_tracks.avi'
+#
+testvid1 = 'data/videos/testvid1.avi'
+testvid2 = 'data/videos/testvid2.avi'
 
 # OpenCV Version 4.3.0.36
 
@@ -140,10 +143,8 @@ def addTracksOnTank( outputvideo, tracks, tank="data/tank.png", nfish = 3, fps=3
 
 def main():
 
-    tracks = data_io.lazytrackData( 0 )
-
-    addTracksOnVideo( diff1, diff1_out, tracks, showvid=True, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
-    # addTracksOnTank( diff2_out, tracks, showvid=True, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
+    # addTracksOnVideo( diff1, diff1_out, tracks, showvid=True, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
+    addTracksOnTank( testvid2, tracks, showvid=False, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
 
 if __name__ == "__main__":
     main()
