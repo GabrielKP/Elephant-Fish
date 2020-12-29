@@ -74,6 +74,7 @@ These dependencies will be needed for this project to work, make sure you have i
 * shap
 * collections
 * kneed
+* argparse
 
 For visualization:
 * opencv2 4.3.0.36 (opencv-python)

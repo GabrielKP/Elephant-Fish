@@ -1,9 +1,7 @@
 # Visualize the tracksets into the video files
 
-import numpy as np
 import cv2
 import sys
-import data_io
 
 # Video paths
 diff1 = "E:\\VideosSWP\\diff_1.avi"
@@ -142,9 +140,12 @@ def addTracksOnTank( outputvideo, tracks, tank="data/tank.png", nfish = 3, fps=3
 
 
 def main():
+    # import data_io
+    # tracks = data_io.lazytraclData( 1 )
 
     # addTracksOnVideo( diff1, diff1_out, tracks, showvid=True, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
-    addTracksOnTank( testvid2, tracks, showvid=False, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
+    # addTracksOnTank( testvid2, tracks, showvid=False, skeleton=[(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)] )
+    pass
 
 if __name__ == "__main__":
     main()
