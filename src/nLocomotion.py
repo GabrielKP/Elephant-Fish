@@ -80,7 +80,7 @@ def trackData2nLoc( trackData ):
         out[f,:,0,0] = vectorLength( x_orivec_next, y_orivec_next )
 
         # Angle between orientation vector current and orientation vector new
-        out[f,:,1,0], out[f,:,2,0] = vectorsUnitAngle( x_orivec_curr, y_orivec_curr, x_orivec_next, y_center_next )
+        out[f,:,1,0], out[f,:,2,0] = vectorsUnitAngle( x_orivec_curr, y_orivec_curr, x_orivec_next, y_orivec_next )
 
         ## Set every other node in relation to orientation of center node
         for n in range( nnodes - 2 ):
