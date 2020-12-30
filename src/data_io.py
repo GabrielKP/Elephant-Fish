@@ -26,14 +26,16 @@ def loadTrackData( path ):
     return np.load( path )
 
 
-def lazytrackData( n ):
+def lazyTrackData( n ):
     """
     Loads predefined datasets
 
     Parameters
     ----------
     n : int
-        Number of dataset to be loaded in
+        Number of dataset to be loaded in, whereas:
+        1:diff1, 2:diff2, 3:diff3, 4:diff4,
+        5:same1, 6:same3, 7:same4, 8:same5
 
     Returns
     -------
@@ -56,8 +58,47 @@ def lazytrackData( n ):
 
 def loadRaycastData( path ):
     """
-    Loads raycast data from path
+    Loads raycastData from path
+
+    Parameters
+    ----------
+    path : path, filename
+        Path to dataSet
+
+    Returns
+    -------
+    raycastData : np.array
+        loads agent bins and wall rays.
+        Result has dimension: (nfish, nBins + nWallRays)
     """
-    raycasts = pd.read_csv( path, sep = ";" ).to_numpy()
-    print( raycasts )
-    print( raycasts.shape )
+    return np.load( path )
+
+
+def lazyRaycastData( n ):
+    """
+    Loads predefined datasets
+
+    Parameters
+    ----------
+    n : int
+        Number of dataset to be loaded in
+        1:diff1, 2:diff2, 3:diff3, 4:diff4,
+        5:same1, 6:same3, 7:same4, 8:same5
+
+    Returns
+    -------
+    raycastData : np.array
+        loads agent bins and wall rays.
+        Result has dimension: (nfish, nBins + nWallRays)
+    """
+    assert n >= 1 and n <= 8, "n needs to be between 1 and 8!"
+    ray1 = "data/raycastData/raycast1.npy"
+    ray2 = "data/raycastData/raycast2.npy"
+    ray3 = "data/raycastData/raycast3.npy"
+    ray4 = "data/raycastData/raycast4.npy"
+    ray5 = "data/raycastData/raycast5.npy"
+    ray6 = "data/raycastData/raycast6.npy"
+    ray7 = "data/raycastData/raycast7.npy"
+    ray8 = "data/raycastData/raycast8.npy"
+    rays = [ ray1, ray2, ray3, ray4, ray5, ray6, ray7, ray8 ]
+    return np.load( rays[n + 1] )
