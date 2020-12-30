@@ -389,4 +389,3 @@ def vectorsUnitAngle( xs1, ys1, xs2, ys2 ):
     angles = getAngles( xs1, ys1, xs2, ys2 )
     # Convert angle to unit vector positions and return
     return np.cos( angles ), np.sin( angles )
-
