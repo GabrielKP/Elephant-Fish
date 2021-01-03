@@ -102,3 +102,21 @@ def lazyRaycastData( n ):
     ray8 = "data/raycastData/raycast8.npy"
     rays = [ ray1, ray2, ray3, ray4, ray5, ray6, ray7, ray8 ]
     return np.load( rays[n - 1] )[:,:,-15:]
+
+
+def loadMean( file="data/mean.npy" ):
+    """
+    Loads the mean for the data used to train the nModel
+
+    Parameter
+    ---------
+    file : filename/path
+        file including the mean for training and target
+        data
+
+    Returns
+    -------
+    means : tuple of np.ndarray
+        mean, std, mean target, std target
+    """
+    return np.load( file, allow_pickle=True )
