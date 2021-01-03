@@ -58,7 +58,7 @@ def lazyTrackData( n ):
 
 def loadRaycastData( path ):
     """
-    Loads raycastData from path
+    Loads raycastData from path, only containing wall Rays
 
     Parameters
     ----------
@@ -69,14 +69,14 @@ def loadRaycastData( path ):
     -------
     raycastData : np.array
         loads agent bins and wall rays.
-        Result has dimension: (nfish, nBins + nWallRays)
+        Result has dimension: (nfish, nframes, nWallRays)
     """
-    return np.load( path )
+    return np.load( path )[:,:,-15:]
 
 
 def lazyRaycastData( n ):
     """
-    Loads predefined datasets
+    Loads raycastData by number, only containing wall Rays
 
     Parameters
     ----------
@@ -89,7 +89,7 @@ def lazyRaycastData( n ):
     -------
     raycastData : np.array
         loads agent bins and wall rays.
-        Result has dimension: (nfish, nBins + nWallRays)
+        Result has dimension: (nfish, nframes, nWallRays)
     """
     assert n >= 1 and n <= 8, "n needs to be between 1 and 8!"
     ray1 = "data/raycastData/raycast1.npy"
@@ -101,4 +101,4 @@ def lazyRaycastData( n ):
     ray7 = "data/raycastData/raycast7.npy"
     ray8 = "data/raycastData/raycast8.npy"
     rays = [ ray1, ray2, ray3, ray4, ray5, ray6, ray7, ray8 ]
-    return np.load( rays[n + 1] )
+    return np.load( rays[n + 1] )[:,:,-15:]
