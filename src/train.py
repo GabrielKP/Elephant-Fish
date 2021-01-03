@@ -115,7 +115,6 @@ def createMean( file, verbose=0 ):
         # nnLoc for fish ( 3 * nnodes )
         ndataPoints = N_NVIEW + N_WRAYS + N_NLOC
 
-        totaldataset = []
         idxs = list( range( nfish ) )
 
         for f in range( nfish ):
