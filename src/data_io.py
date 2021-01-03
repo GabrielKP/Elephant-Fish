@@ -53,7 +53,7 @@ def lazyTrackData( n ):
     track7 = "data/trackData/track7.npy"
     track8 = "data/trackData/track8.npy"
     tracks = [ track1, track2, track3, track4, track5, track6, track7, track8 ]
-    return np.load( tracks[n + 1] )
+    return np.load( tracks[n - 1] )
 
 
 def loadRaycastData( path ):
@@ -101,4 +101,4 @@ def lazyRaycastData( n ):
     ray7 = "data/raycastData/raycast7.npy"
     ray8 = "data/raycastData/raycast8.npy"
     rays = [ ray1, ray2, ray3, ray4, ray5, ray6, ray7, ray8 ]
-    return np.load( rays[n + 1] )[:,:,-15:]
+    return np.load( rays[n - 1] )[:,:,-15:]
