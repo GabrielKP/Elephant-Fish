@@ -127,7 +127,7 @@ def updateRaycasts():
 
     ray = Raycast(our_wall_lines, COUNT_BINS_AGENTS, WALL_RAYS_WALLS, RADIUS_FIELD_OF_VIEW_AGENTS, RADIUS_FIELD_OF_VIEW_WALLS, MAX_VIEW_RANGE, COUNT_FISHES)
 
-    r1 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff1.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[:500] )
+    r1 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff1.h5", [b'head', b'center'], fish_to_extract=[0,1,2]) )
     r3 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff3.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[:17000] )
     r2 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff2.h5", [b'head', b'center'], fish_to_extract=[0,1,2]) )
     r4 = ray.getRays( extract_coordinates("data/sleap/sleap_1_diff4.h5", [b'head', b'center'], fish_to_extract=[0,1,2])[120:] )
