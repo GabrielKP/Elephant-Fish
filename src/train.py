@@ -1,6 +1,7 @@
 # File to handle network training
 from argparse import ArgumentParser
 import numpy as np
+import tensorflow as tf
 from data_io import lazyRaycastData, lazyTrackData, loadMean, loadRaycastData, loadTrackData
 from nLocomotion import trackData2nLoc
 from functions import vectorLength, vectorsUnitAngle
@@ -9,6 +10,16 @@ from functions import vectorLength, vectorsUnitAngle
 def lazyNodeIndices( x ):
     """
     Returns node indices depending on x
+
+    Parameter
+    ---------
+    x : int {2,4,6,8,10}
+        number of nodes for specific set of nodes
+
+    Returns
+    -------
+    nodeIndices : array
+        array of node indices indicating which indices will be used
     """
     assert x % 2 == 0 and x != 0 and x <= 10, "x needs to be 2,4,6,8 or 10"
     n2 = [0,1]
@@ -309,8 +320,56 @@ def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", f
     return x_data_train, y_data_train, x_data_val, y_data_val
 
 
+def makeDatasets( x_train, y_train, x_val, y_val, batch_size, buffer_size ):
+    """
+    Creates tensorflow datasets
+
+    Parameter
+    ---------
+    @todo
+
+    Returns
+    -------
+    @todo
+    """
+    # Put data into datasets
+    train_data = tf.data.Dataset.from_tensor_slices( ( x_train, y_train ) )
+    train_data = train_data.cache().shuffle( buffer_size ).batch( batch_size ).repeat()
+
+    val_data = tf.data.Dataset.from_tensor_slices( ( x_val, y_val ) )
+    val_data = val_data.batch( batch_size ).repeat()
+
+    return train_data, val_data
+
+
+def createModel( name, U_LSTM, U_DENSE, U_OUT, input_shape, dropout=None ):
+    """
+    Creates and returns an RNN model
+
+    Parameter
+    ---------
+    @todo
+    droupout example: [0.1, 0.1]
+    Returns
+    -------
+    @todo
+    """
+    nmodel = tf.keras.models.Sequential( name=name )
+    print( "input shape: {}".format( input_shape ) )
+    nmodel.add( tf.keras.layers.LSTM( U_LSTM , input_shape=input_shape ) )
+    if dropout is not None:
+        nmodel.add( tf.keras.layers.Dropout( dropout[0] ) )
+    nmodel.add( tf.keras.layers.Dense( U_DENSE ) )
+    if dropout is not None:
+        nmodel.add( tf.keras.layers.Dropout( dropout[1] ) )
+    nmodel.add( tf.keras.layers.Dense( U_OUT ) )
+    nmodel.compile( optimizer=tf.keras.optimizers.RMSprop(), loss='mean_squared_error' )
+    nmodel.summary()
+    return nmodel
+
+
 def train(
-    trackdata,
+    tracks,
     nfish,
     nodes,
     modeltag,
