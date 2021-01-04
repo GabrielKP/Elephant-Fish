@@ -1,9 +1,10 @@
 # File to handle network training
 from argparse import ArgumentParser
 import numpy as np
-from data_io import lazyRaycastData, lazyTrackData
+from data_io import lazyRaycastData, lazyTrackData, loadMean, loadRaycastData, loadTrackData
 from nLocomotion import trackData2nLoc
 from functions import vectorLength, vectorsUnitAngle
+
 
 def lazyNodeIndices( x ):
     """
@@ -159,6 +160,153 @@ def createMean( file, verbose=0 ):
 
     np.save( file, np.array( [meanv, std, meanTGT, stdTGT], dtype=object ) )
     print( f"Written to File: {file}" )
+
+
+def prepare_data( dataset, target, start_index, end_index, history_size, target_size, step, single_step=False ):
+    """
+    Function to create datasets with history_size
+    and according labels with target_size
+    Originally taken from
+    https://www.tensorflow.org/tutorials/structured_data/time_series
+
+    Parameter
+    ---------
+    @todo
+
+    Returns
+    -------
+    @todo
+
+    """
+    data = []
+    labels = []
+
+    start_index = start_index + history_size
+    if end_index is None:
+        end_index = len( dataset ) - target_size
+
+    for i in range( start_index, end_index ):
+        indices = range( i - history_size, i, step )
+        data.append( dataset[indices] )
+
+        if single_step:
+            labels.append( target[i + target_size] )
+        else:
+            labels.append( target[i:i + target_size] )
+
+    return np.array( data ), np.array( labels )
+
+
+def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", files=False, wallRayFiles=None ):
+    """
+    Loads Data specified in tracks into train and val data
+
+    Parameter
+    ---------
+    tracks : array
+        array containing integers of tracksets [1,8],
+        when paths is set to True the array needs to
+        contain file names to tracksets
+    split : float (0,1)
+        number between 0 and 1 specifying split of
+        test and validation data
+    hist_size : int
+        amount of frames taken into account to make a
+        prediction
+    target_size : int
+        amount of frames predicted in one prediction
+    meanFile : file/pathToFile
+        File containing mean and standard variation for
+        data given
+    files : bool
+        switches tracks statement to work with filenames
+        instead of integers. If true, wallRays will need
+        to be given as well
+    wallRayFiles : array
+        Array of filenames containing wallRays in matching
+        order to the tracks given in first statement.
+        Only needed if files is set to true.
+
+    Returns
+    -------
+    (x_train, y_train, x_val, y_val) : (np.ndarray, np.ndarray, np.ndarray, np.ndarray)
+        Tuple containing training and validation datasets
+    """
+    assert not files or wallRayFiles is not None, "wallRay Files need to be given if files is set to true"
+
+    # Load mean
+    mean, std, meanTGT, stdTGT = loadMean( meanFile )
+
+    x_data_train = []
+    y_data_train = []
+    x_data_val = []
+    y_data_val = []
+    for i, track in enumerate( tracks ):
+        if files:
+            trackData = loadTrackData( track )
+            wRays = loadRaycastData( wallRayFiles[i] )
+        else:
+            trackData = lazyTrackData( track )
+            wRays = lazyRaycastData( track )
+
+        nLoc = trackData2nLoc( trackData )
+
+        nfish, nframes, ncoords, nnodes = trackData.shape
+        nfish2, nframes2, nwRays = wRays.shape
+        nfish3, nframes3, ncoords3, nnodes3 = nLoc.shape
+        print( nframes )
+        assert ncoords == 2
+        assert ncoords3 == ncoords + 1
+        assert nfish == nfish2
+        assert nfish3 == nfish2
+        assert nframes == nframes2
+        assert nframes  == nframes3 + 1
+        assert nnodes == nnodes3
+
+        N_NVIEW = ( nfish - 1 ) * nnodes * 3
+        N_WRAYS = nwRays
+        N_NLOC = nnodes * 3
+        ndataPoints = N_NVIEW + N_WRAYS + N_NLOC
+
+        idx_split = int( ( nframes - 1 ) * split )
+
+        idxs = list( range( nfish ) )
+        for f in range( nfish ):
+            fdataset = np.empty( ( nframes - 1, ndataPoints ) )
+
+            # nView
+            idxOther = [ x for x in idxs if x != f ]
+            fnView = getnView( trackData[f], trackData[idxOther] )
+            fdataset[:,:N_NVIEW] = np.reshape( fnView[:,1:], ( nframes - 1, N_NVIEW ) )
+            # RayCasts
+            fdataset[:,N_NVIEW:-N_NLOC] = wRays[f,1:]
+            # Locomotion
+            fnLoc = np.reshape( nLoc[f], ( nframes - 1, N_NLOC ) )
+            fdataset[:,-N_NLOC:] = fnLoc
+
+            # Target
+            ftarget = np.empty( ( nframes - 1, N_NLOC ) )
+            ftarget = fnLoc
+
+            # Mean and std
+            fdataset = np.nan_to_num( ( fdataset - mean ) / std )
+            ftarget = np.nan_to_num( ( ftarget - meanTGT ) / stdTGT )
+
+            # Prepare data
+            x_train, y_train = prepare_data( fdataset, ftarget, 0, idx_split, hist_size, target_size, 1, single_step=True )
+            x_data_train.append( x_train )
+            y_data_train.append( y_train )
+
+            x_val, y_val = prepare_data( fdataset, ftarget, idx_split, None, hist_size, target_size, 1, single_step=True )
+            x_data_val.append( x_val )
+            y_data_val.append( y_val )
+
+    x_data_train = np.concatenate( x_data_train, axis=0 )
+    y_data_train = np.concatenate( y_data_train, axis=0 )
+    x_data_val = np.concatenate( x_data_val, axis=0 )
+    y_data_val = np.concatenate( y_data_val, axis=0 )
+
+    return x_data_train, y_data_train, x_data_val, y_data_val
 
 
 def train(
