@@ -375,6 +375,7 @@ def train(
     modeltag,
     units_lstm,
     units_dense,
+    dropout,
     epochs,
     split,
     batch_size,
@@ -384,12 +385,53 @@ def train(
     fov_walls,
     max_view_range
 ):
-    pass
+    """
+    @todo
+    """
+    nnodes = len( nodes )
+    nOutput = 3 * nnodes
+
+    # Data
+    x_train, y_train, x_val, y_val = loadData( tracks, split, hist_size, target_size )
+
+    nDatapoints = x_train.shape[-1]
+
+    print( "x_train: {}".format( x_train.shape ) )
+    print( "y_train: {}".format( y_train.shape ) )
+    print( "x_val  : {}".format( x_val.shape ) )
+    print( "y_val  : {}".format( y_val.shape ) )
+
+    traindata, valdata = makeDatasets( x_train, y_train, x_val, y_val, batch_size, buffer_size )
+
+    # Modelname
+    modelname = f"{len( nodes )}n_{units_lstm}_{units_dense}_{batch_size}b_{hist_size}h"
+    if modeltag is not None:
+        modelname = f"{modeltag}_{modelname}"
+
+    model = createModel( modelname, units_lstm, units_dense, nOutput, x_train.shape[-2:], dropout )
+
+    eval_interval = ( x_train.shape[0] ) // batch_size
+    val_interval = ( x_val.shape[0] ) // batch_size
+
+    history = model.fit( traindata, epochs, steps_per_epoch=eval_interval, validation_data=valdata, validation_steps=val_interval )
+
+    # save @todo
+    # plot @todo
 
 
 def main():
-    # Parse Arguments
-    print( quickNodes( 8 ) )
+    HIST_SIZE = 70
+    TARGET_SIZE = 0
+    BATCH_SIZE = 10
+    BUFFER_SIZE = 10000
+    EPOCHS = 50
+    SPLIT = 0.9
+    FOV_WALLS = 180
+    MAX_VIEW_RANGE = 709
+
+    tracks = [1,2,3,4]
+    nodes = lazyNodeIndices( 4 )
+    train( tracks, 3, nodes, "lmao", 1,1, [0,0], EPOCHS, SPLIT, BATCH_SIZE, BUFFER_SIZE, HIST_SIZE, TARGET_SIZE, FOV_WALLS, MAX_VIEW_RANGE )
     return
     parser = ArgumentParser()
 
