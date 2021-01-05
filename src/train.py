@@ -280,7 +280,7 @@ def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.
         nfish, nframes, ncoords, nnodes = trackData.shape
         nfish2, nframes2, nwRays = wRays.shape
         nfish3, nframes3, ncoords3, nnodes3 = nLoc.shape
-        print( nframes )
+
         assert ncoords == 2
         assert ncoords3 == ncoords + 1
         assert nfish == nfish2
@@ -458,7 +458,7 @@ def train(
     eval_interval = ( x_train.shape[0] ) // batch_size
     val_interval = ( x_val.shape[0] ) // batch_size
 
-    history = model.fit( traindata, epochs, steps_per_epoch=eval_interval, validation_data=valdata, validation_steps=val_interval )
+    history = model.fit( traindata, epochs=epochs, steps_per_epoch=eval_interval, validation_data=valdata, validation_steps=val_interval )
 
     saveModel( model, modelname )
     plot_train_history( history, modelname )
