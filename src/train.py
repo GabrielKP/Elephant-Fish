@@ -2,7 +2,8 @@
 from argparse import ArgumentParser
 import numpy as np
 import tensorflow as tf
-from data_io import lazyRaycastData, lazyTrackData, loadMean, loadRaycastData, loadTrackData
+import matplotlib.pyplot as plt
+from data_io import lazyRaycastData, lazyTrackData, loadMean, loadRaycastData, loadTrackData, saveModel
 from nLocomotion import trackData2nLoc
 from functions import vectorLength, vectorsUnitAngle
 
@@ -208,7 +209,7 @@ def prepare_data( dataset, target, start_index, end_index, history_size, target_
     return np.array( data ), np.array( labels )
 
 
-def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", files=False, wallRayFiles=None ):
+def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.npy", files=False, wallRayFiles=None ):
     """
     Loads Data specified in tracks into train and val data
 
@@ -218,6 +219,8 @@ def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", f
         array containing integers of tracksets [1,8],
         when paths is set to True the array needs to
         contain file names to tracksets
+    nodes : array
+        array containing indices of nodes used in tracks
     split : float (0,1)
         number between 0 and 1 specifying split of
         test and validation data
@@ -245,8 +248,17 @@ def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", f
     """
     assert not files or wallRayFiles is not None, "wallRay Files need to be given if files is set to true"
 
-    # Load mean
+    # Load mean fir appropriate nodes (hacky...)
+    # nnodesSaved = 10
+    # notherData = 75
     mean, std, meanTGT, stdTGT = loadMean( meanFile )
+    # ntemp = np.array( nodes ) + notherData
+    # idx1 = [ idx for idx in range( 105 ) if idx % nnodesSaved in nodes]
+    # mean = mean[idx1]
+    # std = std[idx1]
+    # idx2 = [ idx for idx in range( nnodesSaved * 3 ) if idx % nnodesSaved in nodes]
+    # meanTGT = meanTGT[idx2]
+    # stdTGT = stdTGT[idx2]
 
     x_data_train = []
     y_data_train = []
@@ -259,6 +271,9 @@ def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", f
         else:
             trackData = lazyTrackData( track )
             wRays = lazyRaycastData( track )
+
+        # Use appropriate nodes for track
+        trackData = trackData[:,:,:,nodes]
 
         nLoc = trackData2nLoc( trackData )
 
@@ -273,6 +288,7 @@ def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", f
         assert nframes == nframes2
         assert nframes  == nframes3 + 1
         assert nnodes == nnodes3
+
 
         N_NVIEW = ( nfish - 1 ) * nnodes * 3
         N_WRAYS = nwRays
@@ -295,6 +311,10 @@ def loadData( tracks, split, hist_size, target_size, meanFile="data/mean.npy", f
             fnLoc = np.reshape( nLoc[f], ( nframes - 1, N_NLOC ) )
             fdataset[:,-N_NLOC:] = fnLoc
 
+            # print( fnLoc[0] )
+            # print( nLoc[f][0] )
+            # import sys
+            # sys.exit()
             # Target
             ftarget = np.empty( ( nframes - 1, N_NLOC ) )
             ftarget = fnLoc
@@ -368,6 +388,33 @@ def createModel( name, U_LSTM, U_DENSE, U_OUT, input_shape, dropout=None ):
     return nmodel
 
 
+def plot_train_history( history, title ):
+    """
+    Plots accuracy during training given by history object from keras.
+    From: https://www.tensorflow.org/tutorials/structured_data/time_series
+
+    Parameter
+    ---------
+    history : @todo
+        history object returned by model.fit
+    title : string
+        title displayed on top of plot
+    """
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs = range(len(loss))
+
+    plt.figure()
+
+    plt.plot( epochs, loss, 'b', label='Training loss' )
+    plt.plot( epochs, val_loss, 'r', label='Validation loss' )
+    plt.title( title )
+    plt.legend()
+
+    plt.show()
+
+
 def train(
     tracks,
     nfish,
@@ -392,9 +439,7 @@ def train(
     nOutput = 3 * nnodes
 
     # Data
-    x_train, y_train, x_val, y_val = loadData( tracks, split, hist_size, target_size )
-
-    nDatapoints = x_train.shape[-1]
+    x_train, y_train, x_val, y_val = loadData( tracks, nodes, split, hist_size, target_size )
 
     print( "x_train: {}".format( x_train.shape ) )
     print( "y_train: {}".format( y_train.shape ) )
@@ -415,8 +460,8 @@ def train(
 
     history = model.fit( traindata, epochs, steps_per_epoch=eval_interval, validation_data=valdata, validation_steps=val_interval )
 
-    # save @todo
-    # plot @todo
+    saveModel( model, modelname )
+    plot_train_history( history, modelname )
 
 
 def main():
@@ -428,10 +473,12 @@ def main():
     SPLIT = 0.9
     FOV_WALLS = 180
     MAX_VIEW_RANGE = 709
+    U_LSTM = 50
+    U_DENSE = 50
 
-    tracks = [1,2,3,4]
-    nodes = lazyNodeIndices( 4 )
-    train( tracks, 3, nodes, "lmao", 1,1, [0,0], EPOCHS, SPLIT, BATCH_SIZE, BUFFER_SIZE, HIST_SIZE, TARGET_SIZE, FOV_WALLS, MAX_VIEW_RANGE )
+    tracks = [1]
+    nodes = lazyNodeIndices( 10 )
+    train( tracks, 3, nodes, "new", U_LSTM, U_DENSE, [0,0], EPOCHS, SPLIT, BATCH_SIZE, BUFFER_SIZE, HIST_SIZE, TARGET_SIZE, FOV_WALLS, MAX_VIEW_RANGE )
     return
     parser = ArgumentParser()
 
