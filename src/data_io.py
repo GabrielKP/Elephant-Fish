@@ -120,3 +120,18 @@ def loadMean( file="data/mean.npy" ):
         mean, std, mean target, std target
     """
     return np.load( file, allow_pickle=True )
+
+
+def saveModel( model, modelname ):
+    """
+    Saves the tf model in given path
+
+    Parameter
+    ---------
+    model : tf.keras.models
+        A tf keras model
+    path : string/path
+        Path to directory where model should be saved to
+    """
+    path = "models/" + modelname
+    return model.save( path, overwrite=False )
