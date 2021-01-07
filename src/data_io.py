@@ -134,4 +134,6 @@ def saveModel( model, modelname ):
         Path to directory where model should be saved to
     """
     path = "models/" + modelname
-    return model.save( path, overwrite=False )
+    if not os.path.isdir( path ):
+        os.mkdir( path )
+    return model.save( path )
