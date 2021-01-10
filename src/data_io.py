@@ -5,7 +5,7 @@
 # The last 2 dimensions are the x and y coordinates.
 
 import numpy as np
-import pandas as pd
+import os
 
 
 def loadTrackData( path ):

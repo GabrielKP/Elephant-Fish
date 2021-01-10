@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from data_io import lazyRaycastData, lazyTrackData, loadMean, loadRaycastData, loadTrackData, saveModel
-from nLocomotion import trackData2nLoc
+from nLocomotion import nLoc2binnednLoc, trackData2nLoc
 from functions import vectorLength, vectorsUnitAngle
 
 
@@ -209,7 +209,7 @@ def prepare_data( dataset, target, start_index, end_index, history_size, target_
     return np.array( data ), np.array( labels )
 
 
-def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.npy", files=False, wallRayFiles=None ):
+def loadData( tracks, nodes, split, hist_size, target_size, nbins=40, files=False, wallRayFiles=None ):
     """
     Loads Data specified in tracks into train and val data
 
@@ -251,7 +251,7 @@ def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.
     # Load mean fir appropriate nodes (hacky...)
     # nnodesSaved = 10
     # notherData = 75
-    mean, std, meanTGT, stdTGT = loadMean( meanFile )
+    # mean, std, meanTGT, stdTGT = loadMean( meanFile )
     # ntemp = np.array( nodes ) + notherData
     # idx1 = [ idx for idx in range( 105 ) if idx % nnodesSaved in nodes]
     # mean = mean[idx1]
@@ -276,23 +276,19 @@ def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.
         trackData = trackData[:,:,:,nodes]
 
         nLoc = trackData2nLoc( trackData )
+        bLoc = nLoc2binnednLoc( nLoc, nbins )
 
         nfish, nframes, ncoords, nnodes = trackData.shape
         nfish2, nframes2, nwRays = wRays.shape
-        nfish3, nframes3, ncoords3, nnodes3 = nLoc.shape
 
         assert ncoords == 2
-        assert ncoords3 == ncoords + 1
         assert nfish == nfish2
-        assert nfish3 == nfish2
         assert nframes == nframes2
-        assert nframes  == nframes3 + 1
-        assert nnodes == nnodes3
 
 
         N_NVIEW = ( nfish - 1 ) * nnodes * 3
         N_WRAYS = nwRays
-        N_NLOC = nnodes * 3
+        N_NLOC = nnodes * 3 * nbins
         ndataPoints = N_NVIEW + N_WRAYS + N_NLOC
 
         idx_split = int( ( nframes - 1 ) * split )
@@ -308,8 +304,8 @@ def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.
             # RayCasts
             fdataset[:,N_NVIEW:-N_NLOC] = wRays[f,1:]
             # Locomotion
-            fnLoc = np.reshape( nLoc[f], ( nframes - 1, N_NLOC ) )
-            fdataset[:,-N_NLOC:] = fnLoc
+            fbLoc = np.reshape( bLoc[f], ( nframes - 1, N_NLOC ) )
+            fdataset[:,-N_NLOC:] = fbLoc
 
             # print( fnLoc[0] )
             # print( nLoc[f][0] )
@@ -317,11 +313,7 @@ def loadData( tracks, nodes, split, hist_size, target_size, meanFile="data/mean.
             # sys.exit()
             # Target
             ftarget = np.empty( ( nframes - 1, N_NLOC ) )
-            ftarget = fnLoc
-
-            # Mean and std
-            fdataset = np.nan_to_num( ( fdataset - mean ) / std )
-            ftarget = np.nan_to_num( ( ftarget - meanTGT ) / stdTGT )
+            ftarget = fbLoc
 
             # Prepare data
             x_train, y_train = prepare_data( fdataset, ftarget, 0, idx_split, hist_size, target_size, 1, single_step=True )
@@ -435,10 +427,12 @@ def train(
     """
     @todo
     """
+    nbins = 40
     nnodes = len( nodes )
-    nOutput = 3 * nnodes
+    nOutput = 3 * nnodes * nbins
 
     # Data
+    print( "Loading Data" )
     x_train, y_train, x_val, y_val = loadData( tracks, nodes, split, hist_size, target_size )
 
     print( "x_train: {}".format( x_train.shape ) )
@@ -469,7 +463,7 @@ def main():
     TARGET_SIZE = 0
     BATCH_SIZE = 10
     BUFFER_SIZE = 10000
-    EPOCHS = 50
+    EPOCHS = 1
     SPLIT = 0.9
     FOV_WALLS = 180
     MAX_VIEW_RANGE = 709
@@ -477,7 +471,7 @@ def main():
     U_DENSE = 50
 
     tracks = [1]
-    nodes = lazyNodeIndices( 10 )
+    nodes = lazyNodeIndices( 2 )
     train( tracks, 3, nodes, "new", U_LSTM, U_DENSE, [0,0], EPOCHS, SPLIT, BATCH_SIZE, BUFFER_SIZE, HIST_SIZE, TARGET_SIZE, FOV_WALLS, MAX_VIEW_RANGE )
     return
     parser = ArgumentParser()

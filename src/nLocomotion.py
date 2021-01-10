@@ -15,6 +15,7 @@
 # [:,:,2] == Angle, y coordinate on unit circle
 
 import numpy as np
+from numpy.core.function_base import linspace
 from functions import getAngles, vectorLength, vectorsUnitAngle
 
 def trackData2nLoc( trackData ):
@@ -199,18 +200,88 @@ def nLoc2trackData( nLocomotion, startCoordinates ):
 
     return out
 
+
+def nLoc2binnednLoc( nLocomotion, nbins=40 ):
+    """
+    Converts nLocomotion to binned nLocomotion, that means
+    every entry is converted into a oneHotVector encoding
+    where each value represents the probability of an action
+    being in a certain bin.
+
+    Parameter
+    ---------
+    nLocomotion : ndarray
+        array containing movement data between frames in form of (nfish, nframes - 1, 3, nnodes)
+    bins : int
+        Number specifying how many bins are used
+
+    Returns
+    -------
+    binnednLoc : ndarray
+        array containing movement data in a binned manner in form of
+        (nfish, nframes - 1, 3, nnodes, nbins)
+    """
+    nfish, nframes, ncoords, nnodes = nLocomotion.shape
+
+    out = np.empty( ( nfish, nframes, ncoords, nnodes, nbins ) )
+
+    # Since every Node has different average values and value ranges, bins are made separately
+    nodeDistanceBins = [
+        np.linspace( 0, 40, nbins - 1 ),        # Head
+        np.linspace( 0, 20, nbins - 1 ),        # Movement distance
+        np.linspace( 0, 15, nbins - 1 ),        # Left Base
+        np.linspace( 0, 15, nbins - 1 ),        # Right Base
+        np.linspace( 0, 35, nbins - 1 ),        # Left Fin
+        np.linspace( 0, 35, nbins - 1 ),        # Right Fin
+        np.linspace( 5, 35, nbins - 1 ),        # Left Body
+        np.linspace( 5, 35, nbins - 1 ),        # Right Body
+        np.linspace( 5, 65, nbins - 1 ),        # Tail
+        np.linspace( 10, 70, nbins - 1 ),       # Tail Fin
+    ]
+
+    angbins = linspace( -1, 1, nbins -1 )
+
+    for n in range( nnodes ):
+        idx_c = np.digitize( nLocomotion[:,:,0,n], nodeDistanceBins[n] )
+        out[:,:,0,n] = np.eye( nbins )[idx_c]
+
+    idx_c = np.digitize( nLocomotion[:,:,1,:], angbins )
+    out[:,:,1,:] = np.eye( nbins )[idx_c]
+
+    idx_c = np.digitize( nLocomotion[:,:,2,:], angbins )
+    out[:,:,2,:] = np.eye( nbins )[idx_c]
+
+    return out
+
+
 def main():
-    # trackData = data_io.lazytrackData( 1 )[:,0:3,:,0:2]
+    import data_io
+    trackData = data_io.lazyTrackData( 1 )
     # print( trackData.shape )
     # print( trackData )
-    # nloc = trackData2nLoc( trackData )
+    nloc = trackData2nLoc( trackData )
     # print( nloc.shape )
     # print( nloc )
-    # print( " ")
+    # print( " " )
+    f = 2
+    # print( "avg:", np.mean( nloc[f,:,0], axis=0 ) )
+    # print( "max:", np.amax( nloc[f,:,0], axis=0 ) )
+    # print( "min:", np.amin( nloc[f,:,0], axis=0 ) )
     # startpos =  trackData[:,0]
     # newTrackData = nLoc2trackData( nloc, startpos )
     # print( newTrackData.shape )
     # print( newTrackData )
+    # nbins = 40
+    # bins = np.linspace( -20, 20, nbins )
+    # print( bins )
+    # test = np.array( [ np.array( [0.5,10,3.1,4.2] ), np.array( [-15,19.8,3,4.2] ), np.array( [20.3,2.1,9.3,-2] ) ] )
+    # print( np.digitize( test, bins ) )
+    nloc[f,100,0,1] = 18
+    bLoc = nLoc2binnednLoc( nloc )
+    # np.set_printoptions(threshold=np.inf)
+    # print( nloc[f,100,:,1] )
+    # print( bLoc[f,100,:,1] )
+
     pass
 
 if __name__ == "__main__":
