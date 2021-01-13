@@ -229,9 +229,9 @@ def loadData( tracks, nodes, split, hist_size, target_size, nbins=40, files=Fals
         prediction
     target_size : int
         amount of frames predicted in one prediction
-    meanFile : file/pathToFile
-        File containing mean and standard variation for
-        data given
+    nbins : int
+        Number deciding in how many bins the locomotion
+        should be discretized in
     files : bool
         switches tracks statement to work with filenames
         instead of integers. If true, wallRays will need
