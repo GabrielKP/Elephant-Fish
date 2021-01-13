@@ -71,7 +71,7 @@ def loadRaycastData( path ):
         loads agent bins and wall rays.
         Result has dimension: (nfish, nframes, nWallRays)
     """
-    return np.load( path )[:,:,-15:]
+    return np.load( path )
 
 
 def lazyRaycastData( n ):
@@ -101,7 +101,7 @@ def lazyRaycastData( n ):
     ray7 = "data/raycastData/raycast7.npy"
     ray8 = "data/raycastData/raycast8.npy"
     rays = [ ray1, ray2, ray3, ray4, ray5, ray6, ray7, ray8 ]
-    return np.load( rays[n - 1] )[:,:,-15:]
+    return np.load( rays[n - 1] )
 
 
 def loadMean( file="data/mean.npy" ):
@@ -130,7 +130,7 @@ def saveModel( model, modelname ):
     ---------
     model : tf.keras.models
         A tf keras model
-    path : string/path
+    modelname : string/path
         Path to directory where model should be saved to
     """
     path = "models/" + modelname
