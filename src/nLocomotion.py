@@ -201,6 +201,37 @@ def nLoc2trackData( nLocomotion, startCoordinates ):
     return out
 
 
+def getNodeDistanceBins( nbins=40 ):
+    return [
+        np.linspace( 0, 40, nbins - 1 ),        # Head
+        np.linspace( 0, 20, nbins - 1 ),        # Movement distance
+        np.linspace( 0, 15, nbins - 1 ),        # Left Base
+        np.linspace( 0, 15, nbins - 1 ),        # Right Base
+        np.linspace( 0, 35, nbins - 1 ),        # Left Fin
+        np.linspace( 0, 35, nbins - 1 ),        # Right Fin
+        np.linspace( 5, 35, nbins - 1 ),        # Left Body
+        np.linspace( 5, 235, nbins - 1 ),        # Right Body
+        np.linspace( 5, 65, nbins - 1 ),        # Tail
+        np.linspace( 10, 70, nbins - 1 ),       # Tail Fin
+    ]
+
+
+def getNodeDistanceBinValues( nodeDistanceBins ):
+    """
+    Returns values of NodeBins
+    """
+    out = []
+    for nodeBin in nodeDistanceBins:
+        distance2middle = ( nodeBin[1] - nodeBin[0] ) / 2
+        out.append( [ nodeBin[0] ] + [ binval + distance2middle for binval in nodeBin[:-1] ] + [ nodeBin[ len( nodeBin ) - 1 ] ] )
+    return out
+
+
+def getNodeAngleBinValue( anglebins ):
+    distance2middle = ( anglebins[1] - anglebins[0] ) / 2
+    return [anglebins[0]] + [ binval + distance2middle for binval in anglebins[:-1] ] + [anglebins[len(anglebins) - 1] ]
+
+
 def nLoc2binnednLoc( nLocomotion, nbins=40 ):
     """
     Converts nLocomotion to binned nLocomotion, that means
@@ -226,18 +257,7 @@ def nLoc2binnednLoc( nLocomotion, nbins=40 ):
     out = np.empty( ( nfish, nframes, ncoords, nnodes, nbins ) )
 
     # Since every Node has different average values and value ranges, bins are made separately
-    nodeDistanceBins = [
-        np.linspace( 0, 40, nbins - 1 ),        # Head
-        np.linspace( 0, 20, nbins - 1 ),        # Movement distance
-        np.linspace( 0, 15, nbins - 1 ),        # Left Base
-        np.linspace( 0, 15, nbins - 1 ),        # Right Base
-        np.linspace( 0, 35, nbins - 1 ),        # Left Fin
-        np.linspace( 0, 35, nbins - 1 ),        # Right Fin
-        np.linspace( 5, 35, nbins - 1 ),        # Left Body
-        np.linspace( 5, 35, nbins - 1 ),        # Right Body
-        np.linspace( 5, 65, nbins - 1 ),        # Tail
-        np.linspace( 10, 70, nbins - 1 ),       # Tail Fin
-    ]
+    nodeDistanceBins = getNodeDistanceBins( nbins )
 
     angbins = linspace( -1, 1, nbins -1 )
 
