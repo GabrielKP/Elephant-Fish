@@ -300,7 +300,7 @@ def loadData( tracks, nodes, split, hist_size, target_size, nbins=40, files=Fals
             # nView
             idxOther = [ x for x in idxs if x != f ]
             fnView = getnView( trackData[f], trackData[idxOther] )
-            fdataset[:,:N_NVIEW] = np.reshape( fnView[:,1:], ( nframes - 1, N_NVIEW ) )
+            fdataset[:,:N_NVIEW] = np.reshape( np.swapaxes( fnView[:,1:], 0, 1 ), ( nframes - 1, N_NVIEW ) )
             # RayCasts
             fdataset[:,N_NVIEW:-N_NLOC] = wRays[f,1:]
             # Locomotion
@@ -375,7 +375,7 @@ def createModel( name, U_LSTM, U_DENSE, U_OUT, input_shape, dropout=None ):
     if dropout is not None:
         nmodel.add( tf.keras.layers.Dropout( dropout[1] ) )
     nmodel.add( tf.keras.layers.Dense( U_OUT ) )
-    nmodel.compile( optimizer=tf.keras.optimizers.RMSprop(), loss='mean_squared_error' )
+    nmodel.compile( optimizer=tf.keras.optimizers.RMSprop(), loss='binary_crossentropy' )
     nmodel.summary()
     return nmodel
 
@@ -463,16 +463,16 @@ def main():
     TARGET_SIZE = 0
     BATCH_SIZE = 10
     BUFFER_SIZE = 10000
-    EPOCHS = 1
+    EPOCHS = 20
     SPLIT = 0.9
     FOV_WALLS = 180
     MAX_VIEW_RANGE = 709
-    U_LSTM = 50
-    U_DENSE = 50
+    U_LSTM = 600
+    U_DENSE = 450
 
     tracks = [1]
     nodes = lazyNodeIndices( 2 )
-    train( tracks, 3, nodes, "new", U_LSTM, U_DENSE, [0,0], EPOCHS, SPLIT, BATCH_SIZE, BUFFER_SIZE, HIST_SIZE, TARGET_SIZE, FOV_WALLS, MAX_VIEW_RANGE )
+    train( tracks, 3, nodes, "new", U_LSTM, U_DENSE, [0.2,0.2], EPOCHS, SPLIT, BATCH_SIZE, BUFFER_SIZE, HIST_SIZE, TARGET_SIZE, FOV_WALLS, MAX_VIEW_RANGE )
     return
     parser = ArgumentParser()
 
