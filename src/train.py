@@ -43,7 +43,7 @@ def getnView( tracksCurr, tracksOther ):
         shape: (nframes, 2, nnodes)
     tracksOther : np.array
         trackData for other fish the current fish is looking at
-        shape: (nOtherFish, nframes, nnodes)
+        shape: (nOtherFish, nframes, 2, nnodes)
 
     Returns
     -------
@@ -136,7 +136,7 @@ def createMean( file, verbose=0 ):
             # nView
             idxOther = [ x for x in idxs if x != f ]
             fnView = getnView( trackData[f], trackData[idxOther] )
-            fdataset[:,:N_NVIEW] = np.reshape( fnView[:,1:], ( nframes - 1, N_NVIEW ) )
+            fdataset[:,:N_NVIEW] = np.reshape( np.swapaxes( fnView[:,1:], 0, 1 ), ( nframes - 1, N_NVIEW ) )
             # RayCasts
             fdataset[:,N_NVIEW:-N_NLOC] = wRays[f,1:]
             # Locomotion
