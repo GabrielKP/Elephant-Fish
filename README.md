@@ -4,8 +4,8 @@
 
 ## Authors
 
-* Marc Gröling
-* Gabriel Kressin
+- Marc Gröling
+- Gabriel Kressin
 
 ## The goal
 
@@ -16,61 +16,71 @@ How do animals decide what to do and where to move as a group? We use Guppys as 
 ## Project state
 
 Here you find the presentations:
-* [Midterm Presentation](https://docs.google.com/presentation/d/1j3MFCuJ0u3WaQ5IgOig-MALxQPnDhmf9EoApNko3mCg/edit?usp=sharing)
-* [Final Presentation](https://docs.google.com/presentation/d/1CoAPEFmZlw0pXVqQY0UqzyyiwGDfyVOOpM-6B-adfpI/edit?usp=sharing).
+
+- [Midterm Presentation](https://docs.google.com/presentation/d/1j3MFCuJ0u3WaQ5IgOig-MALxQPnDhmf9EoApNko3mCg/edit?usp=sharing)
+- [Final Presentation](https://docs.google.com/presentation/d/1CoAPEFmZlw0pXVqQY0UqzyyiwGDfyVOOpM-6B-adfpI/edit?usp=sharing).
 
 All functions have documentation and for most there is above or in the `main()` function of that file.
 
 We managed to do and implement following:
-* Video labelling and track extraction with sleap
-  + Tracking Data found in `data/sleap_1_[diff/same]x.hd5`
-  + Reader implementation for data, missing data interpolation and outlier correction
-  + Found in `src/reader.py`, usage: `extract_coordinates( ... )`
-* Locomotion and nLoc computation for trackdata
-  + Found in `src/locomotion.py`
-  + Usage: `getLocomotion( ... )`
-  + or   : `getnLoc( ... )`
-  + Computed locomotions are in `data/locomotion_data_[diff/same]x.csv
-* Raycast and wallrays computation
-  + Found in `src/raycasts.py`
-  + Usage: Create a raycast object and then call `ray.getRays( ... )` (also computes wallrays)
-  + Computed raycasts and wallrays are in `data/raycast_data_[diff/same]x.csv
-* Evaluation and Analysis of given tracks
-  + Found in `src/evaluation.py`
-  + Usage: `create_plots( ... )` (single trackset)
-  + or   : `create_all_plots_seperate( ... )` (creates seperate plots for all live fish tracksets)
-  + or   : `create_all_plots_together( ... )` (creates  plots for all live fish tracksets together)
-  + or you use a specific plotting function, be carefull for the amount of nodes for the input!
-  + There is plots and figures for all tracks from the fish videos in the `figures` folder!
-* Visualization of tracks
-  + Found in `src/visualization.py`
-  + See down below in "visualization" for more information
-* Baseline model
-  + Found in `src/main.py`
-  + See below for explanation
-* nmodel
-  + Found in `src/nmodel.py`
-  + See below for explanation
 
-# Dependencies
+- Video labelling and track extraction with sleap
+  - Tracking Data found in `data/sleap_1_[diff/same]x.hd5`
+  - Reader implementation for data, missing data interpolation and outlier correction
+  - Found in `src/reader.py`, usage: `extract_coordinates( ... )`
+- Locomotion and nLoc computation for trackdata
+  - Found in `src/locomotion.py`
+  - Usage: `getLocomotion( ... )`
+  - or : `getnLoc( ... )`
+  - Computed locomotions are in `data/locomotion*data*[diff/same]x.csv
+- Raycast and wallrays computation
+  - Found in `src/raycasts.py`
+  - Usage: Create a raycast object and then call `ray.getRays( ... )` (also computes wallrays)
+  - Computed raycasts and wallrays are in `data/raycast*data*[diff/same]x.csv
+- Evaluation and Analysis of given tracks
+  - Found in `src/evaluation.py`
+  - Usage: `create_plots( ... )` (single trackset)
+  - or : `create_all_plots_seperate( ... )` (creates seperate plots for all live fish tracksets)
+  - or : `create_all_plots_together( ... )` (creates plots for all live fish tracksets together)
+  - or you use a specific plotting function, be carefull for the amount of nodes for the input!
+  - There is plots and figures for all tracks from the fish videos in the `figures` folder!
+- Visualization of tracks
+  - Found in `src/visualization.py`
+  - See down below in "visualization" for more information
+- Baseline model
+  - Found in `src/main.py`
+  - See below for explanation
+- nmodel
+  - Found in `src/nmodel.py`
+  - See below for explanation
+
+# Setup
+
+```bash
+conda create -n ef python=3.9
+conda activate ef
+pip install -r requirements.txt
+```
 
 These dependencies will be needed for this project to work, make sure you have installed them correctly.
-* Python 3.6.10
-* sklearn
-* numpy
-* imageio
-* seaborn
-* matplotlib
-* scipy
-* h5py
-* keras
-* tensorflow 2.2.1
-* shap
-* collections
-* kneed
+
+- Python 3.6.10
+- sklearn
+- numpy
+- imageio
+- seaborn
+- matplotlib
+- scipy
+- h5py
+- keras
+- tensorflow 2.2.1
+- shap
+- collections
+- kneed
 
 For visualization:
-* opencv2 4.3.0.36 (opencv-python)
+
+- opencv2 4.3.0.36 (opencv-python)
 
 # General Information
 
@@ -98,10 +108,10 @@ first let us define the look vector: the look vector is defined as the subtracti
 
 In this master thesis https://www.mi.fu-berlin.de/inf/groups/ag-ki/Theses/Completed-theses/Master_Diploma-theses/2019/Maxeiner/MA-Maxeiner.pdf it is explained how raycasts were done. It can be found under section 3.2.2 and 3.2.3
 
-
 # BASELINE Model
 
 ## Input
+
 The Baseline model gets as input a sequence of hand-crafted vectors, which consist of the following: last locomotion (the locomotion that lead the fish to this point), wall rays and agent rays. The sequence length basically means that the network gets this hand-crafted vector for the last length_sequence timesteps.
 
 ## Output
@@ -124,11 +134,13 @@ n stands for the amount of nodes
 ## The nloc model
 
 Datastructure to represent movement. n stands for the amount of nodes per fish
-* The first three arguments provide the change from the old center point to the new one, dis, angular speed and orientation. All in relation to the previous orientation.
-* From that point the base fish model will be computed on
-* The rest (n - 1) * 2 arguments are the distance and orientation to the center node
+
+- The first three arguments provide the change from the old center point to the new one, dis, angular speed and orientation. All in relation to the previous orientation.
+- From that point the base fish model will be computed on
+- The rest (n - 1) \* 2 arguments are the distance and orientation to the center node
 
 This is how an nloc array looks:
+
 ```
 [
     [f1_lin, f1_ang, f1_ori, f1_1_dis, d1_1_ori, f1_2_dis, f1_2_ori, ..., f2_lin, f2_ang, f2_ori, ... ]
@@ -142,6 +154,7 @@ Datastructure to represent the view of a fish. A fish in the n Node Model views 
 The nView vector saves the distances and angles from the center of the fish to the n nodes of every other fish.
 
 This is how an nView array looks like for fish1:
+
 ```
 [
     [f2_n1_dis, f2_n1_ang, f2_n2_dis, f2_n2_ang, ..., f3_n1_dis, f3_n1_ang, ...]
@@ -152,25 +165,28 @@ This is how an nView array looks like for fish1:
 
 The model gets as input:
 An Tensor with HIST_SIZE amount of datasets, each containing BATCH_SIZE amount of datapoints in the form of:
-* Wall rays, which are taken from beforehand computed raycastdata with `stealWallrays( ... )` ( N_WRAYS is the amount of variables in a single row)
-* nView `getnView` for the certain fish ( N_VIEWS is the amount of variables in a single row )
-* nLoc from previos timestep `locomotion.getnLoc` ( D_LOC is the amount of variables in a single row)
+
+- Wall rays, which are taken from beforehand computed raycastdata with `stealWallrays( ... )` ( N_WRAYS is the amount of variables in a single row)
+- nView `getnView` for the certain fish ( N_VIEWS is the amount of variables in a single row )
+- nLoc from previos timestep `locomotion.getnLoc` ( D_LOC is the amount of variables in a single row)
 
 Which leaves the input with shape (HIST_SIZE, BATCH_SIZE, N_VIEWS + N_WRAYS + D_LOC )
 
 ## Output
-* The nloc for that timestep
+
+- The nloc for that timestep
 
 output shape ( INPUT_BATCH_SIZE , D_LOC )
 
 ## Useful functions
 
 There is a few functions to make your life easier:
-* `loadData( ... )` to load the data in
-* `getDatasets( ... )` shape data into correct tf datasets
-* `createModel( ... )` creates the model
-* `saveModel( ... )` saves the model
-* `plot_train_history( ... )` plots the train history
+
+- `loadData( ... )` to load the data in
+- `getDatasets( ... )` shape data into correct tf datasets
+- `createModel( ... )` creates the model
+- `saveModel( ... )` saves the model
+- `plot_train_history( ... )` plots the train history
 
 ## Training
 
@@ -227,7 +243,6 @@ skeleton: A mapping of indices to connect points with lines,
     [(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)]
 ```
 
-
 # Given Videos
 
 ## Video Mapping
@@ -267,18 +282,21 @@ same_5: entire video
 Improvements which would or could have improved the results.
 
 ### Data extraction
-* More training on data in sleap (probably 200 - 600 frames more), specifically for edge cases
-* Better interpolation method:
-* Detect outliers not by constant velocity but rather by a factor depending on the current velocity
-* Detect "really bad sequence" of frames more reliably
-* Include consistency checks on Nodes in relation to each other (e.g. center needs to be between tail and head, and many more)
+
+- More training on data in sleap (probably 200 - 600 frames more), specifically for edge cases
+- Better interpolation method:
+- Detect outliers not by constant velocity but rather by a factor depending on the current velocity
+- Detect "really bad sequence" of frames more reliably
+- Include consistency checks on Nodes in relation to each other (e.g. center needs to be between tail and head, and many more)
 
 ### Models
-* Bin representation for Locomotion (very important)
-* Create a fix for "the angle problem" (as described in presentation) (very important)
-  + Either by the fix explained in presentation
-  + Or by representing angles as vectors
+
+- Bin representation for Locomotion (very important)
+- Create a fix for "the angle problem" (as described in presentation) (very important)
+  - Either by the fix explained in presentation
+  - Or by representing angles as vectors
 
 ### Organisational
-* Use more time for the model itself and not for the things around it
-* Start as early as possible with the model
+
+- Use more time for the model itself and not for the things around it
+- Start as early as possible with the model

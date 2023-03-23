@@ -1,0 +1,14 @@
+sklearn
+numpy
+imageio
+seaborn
+matplotlib
+scipy
+h5py
+keras
+shap
+opencv-python
+kneed
+shap
+black
+pre-commit
