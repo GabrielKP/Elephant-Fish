@@ -1,9 +1,6 @@
-import math
-from itertools import chain
-from typing import Optional, Tuple
+from typing import Tuple, List
 
 import numpy as np
-import pandas as pd
 
 from functions import (
     getAngle,
@@ -13,7 +10,6 @@ from functions import (
     getAngles,
     getDistances,
 )
-from reader import *
 
 
 def row_l2c(coords: np.ndarray, locs: np.ndarray) -> np.ndarray:
@@ -273,7 +269,8 @@ def unbin_loc(
     Parameters
     ----------
     binned_loc: np.ndarray, shape = (n_rows, n_fish * 3)
-        binned locomotion, encoded as indices of one hot vectors
+        binned locomotion, encoded as indices.
+        n_rows is the amount of "locomotion steps".
         [
             [r0_f1_lin_bin_id, r0_f1_ang_bin_id, r0_f1_ori_bin_id, r0_f2_lin_bin_id, ...],
             [r1_f1_lin_bin_id, r1_f1_ang_bin_id, r1_f1_ori_bin_id, r1_f2_lin_bin_id, ...],
@@ -289,7 +286,7 @@ def unbin_loc(
     Returns
     -------
     locomotion: np.ndarray, shape = (n_rows, n_fish * 3)
-        locomotion data, n_rows is the amount of "locomotion steps".
+        locomotion data
         [
             [r0_f1_lin, r0_f1_ang, r0_f1_ori, r0_f2_lin, ...],
             [r1_f1_lin, r1_f1_ang, r1_f1_ori, r1_f2_lin, ...],
