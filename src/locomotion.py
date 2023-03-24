@@ -1,6 +1,6 @@
 import math
 from itertools import chain
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -8,94 +8,12 @@ import pandas as pd
 from functions import (
     getAngle,
     getDistance,
-    readClusters,
-    distancesToClusters,
-    softmax,
-    get_indices,
     convPolarToCart,
     get_distances,
     getAngles,
     getDistances,
-    convertAngle,
 )
 from reader import *
-
-
-def convertLocmotionToBin(
-    loco, clusters_path, path_to_save=None, probabilities=True
-):
-    # get cluster centers
-    clusters_mov, clusters_pos, clusters_ori = readClusters(clusters_path)
-
-    result = None
-    # convert locomotion into bin representation for each fish
-    for i in range(0, int(loco.shape[1] / 3)):
-        if probabilities:
-            # compute distances to cluster centers and invert them (1/x) (exp so we do not get divide by zero)
-            dist_mov = 1 / np.exp(
-                distancesToClusters(loco[:, i * 3], clusters_mov)
-            )
-            dist_pos = 1 / np.exp(
-                distancesToClusters(loco[:, i * 3 + 1], clusters_pos)
-            )
-            dist_ori = 1 / np.exp(
-                distancesToClusters(loco[:, i * 3 + 2], clusters_ori)
-            )
-
-            # get probabilites row-wise with softmax function and append header
-            prob_mov = np.append(
-                np.array(
-                    [
-                        [
-                            "Fish_" + str(i) + "_prob_next_x_bin_" + str(j)
-                            for j in range(0, len(clusters_mov))
-                        ]
-                    ]
-                ),
-                softmax(dist_mov),
-                axis=0,
-            )
-            prob_pos = np.append(
-                np.array(
-                    [
-                        [
-                            "Fish_" + str(i) + "_prob_next_y_bin_" + str(j)
-                            for j in range(0, len(clusters_pos))
-                        ]
-                    ]
-                ),
-                softmax(dist_pos),
-                axis=0,
-            )
-            prob_ori = np.append(
-                np.array(
-                    [
-                        [
-                            "Fish_" + str(i) + "_prob_ori_bin_" + str(j)
-                            for j in range(0, len(clusters_ori))
-                        ]
-                    ]
-                ),
-                softmax(dist_ori),
-                axis=0,
-            )
-
-            temp = np.append(
-                np.append(prob_mov, prob_pos, axis=1), prob_ori, axis=1
-            )
-            if i == 0:
-                result = temp
-            else:
-                result = np.append(result, temp, axis=1)
-        else:
-            # todo
-            pass
-
-    if path_to_save == None:
-        return result[1:]
-    else:
-        df = pd.DataFrame(data=result[1:], columns=result[0])
-        df.to_csv(path_to_save, sep=";")
 
 
 def row_l2c(coords: np.ndarray, locs: np.ndarray) -> np.ndarray:
@@ -208,8 +126,11 @@ def getnLoc(tracks: np.ndarray, nnodes: int, nfish: int = 3) -> np.ndarray:
     locomotion : np.ndarray, shape: [n_fish * 3, n_rows_tracks - 1]
         Vector containing for every fish:
             * lin: distance from current to next center position
+                   given as distance within the used coordinate system
             * ang: angle from current to next center position (egocentric)
+                   given as radians: [0,2pi)
             * ori: change in orientation from current to next center position
+                   given as radians: [0,2pi)
 
         nnodes=1:
         [
@@ -264,6 +185,158 @@ def getnLoc(tracks: np.ndarray, nnodes: int, nfish: int = 3) -> np.ndarray:
                 out[:, ix + 2 * n + 1] = getAngles(vec_look_next, vec_cn_next)
 
     return out
+
+
+def get_bins(bins_range: Tuple[int, int], n_bins: int) -> np.ndarray:
+    return np.linspace(
+        start=bins_range[0],
+        stop=bins_range[1],
+        num=n_bins - 1,
+        endpoint=True,
+    )
+
+
+def bin_loc(
+    locomotion: np.ndarray,
+    n_bins_lin: int,
+    n_bins_ang: int,
+    n_bins_ori: int,
+    bins_range_lin: Tuple[int, int] = (-7, 13),
+) -> np.ndarray:
+    """
+    Returns binned locs
+
+    Parameters
+    ----------
+    locomotion: np.ndarray, shape = (n_rows, n_fish * 3)
+        locomotion data, n_rows is the amount of "locomotion steps".
+        [
+            [r0_f1_lin, r0_f1_ang, r0_f1_ori, r0_f2_lin, ...],
+            [r1_f1_lin, r1_f1_ang, r1_f1_ori, r1_f2_lin, ...],
+            ...
+        ]
+    n_bins_lin: int
+    n_bins_ang: int
+    n_bins_ori: int
+        amount of bins for each movement type
+    bins_range_lin: (int, int), default = (-7, 13)
+        range for which bins are created, one bin is allotted for
+        values lower or higher than the threshold respectively.
+        based on plots determined most linear movement lies
+        between -7 and + 13.
+
+    Returns
+    -------
+    binned_loc: np.ndarray, shape = (n_rows, n_fish * 3)
+        binned locomotion, encoded as indices of one hot vectors
+        [
+            [r0_f1_lin_bin_id, r0_f1_ang_bin_id, r0_f1_ori_bin_id, r0_f2_lin_bin_id, ...],
+            [r1_f1_lin_bin_id, r1_f1_ang_bin_id, r1_f1_ori_bin_id, r1_f2_lin_bin_id, ...],
+            ...
+        ]
+    """
+    nfish = locomotion.shape[-1] // 3
+
+    # 1. Get indices and output array
+    binned_loc = np.empty((locomotion.shape), np.int8)
+    # locs indices
+    lin = [3 * x for x in range(nfish)]
+    ang = [3 * x + 1 for x in range(nfish)]
+    ori = [3 * x + 2 for x in range(nfish)]
+
+    # 2. Linear
+    bins_lin = get_bins(bins_range_lin, n_bins_lin)
+    binned_loc[:, lin] = np.digitize(locomotion[:, lin], bins_lin)
+    # 3. Angular
+    # (do not require 2 extra bins as all values are [0,2pi),
+    #  thus can create more within the linspace)
+    bins_ang = get_bins((0, 2 * np.pi), n_bins_ang + 2)
+    binned_loc[:, ang] = np.digitize(locomotion[:, ang], bins_ang)
+    # 4. Orientation
+    bins_ori = get_bins((0, 2 * np.pi), n_bins_ori + 2)
+    binned_loc[:, ori] = np.digitize(locomotion[:, ori], bins_ori)
+
+    return binned_loc
+
+
+def unbin_loc(
+    binned_locomotion: np.ndarray,
+    n_bins_lin: int,
+    n_bins_ang: int,
+    n_bins_ori: int,
+    bins_range_lin: Tuple[int, int] = (-7, 13),
+) -> np.ndarray:
+    """
+    Returns binned locs as normal locs by replacing bin values with
+    center bin value.
+
+    Parameters
+    ----------
+    binned_loc: np.ndarray, shape = (n_rows, n_fish * 3)
+        binned locomotion, encoded as indices of one hot vectors
+        [
+            [r0_f1_lin_bin_id, r0_f1_ang_bin_id, r0_f1_ori_bin_id, r0_f2_lin_bin_id, ...],
+            [r1_f1_lin_bin_id, r1_f1_ang_bin_id, r1_f1_ori_bin_id, r1_f2_lin_bin_id, ...],
+            ...
+        ]
+    n_bins_lin: int
+    n_bins_ang: int
+    n_bins_ori: int
+        amount of bins for each movement type
+    bins_range_lin: (int, int), default = (-7, 13)
+        range for which bins were created.
+
+    Returns
+    -------
+    locomotion: np.ndarray, shape = (n_rows, n_fish * 3)
+        locomotion data, n_rows is the amount of "locomotion steps".
+        [
+            [r0_f1_lin, r0_f1_ang, r0_f1_ori, r0_f2_lin, ...],
+            [r1_f1_lin, r1_f1_ang, r1_f1_ori, r1_f2_lin, ...],
+            ...
+        ]
+    """
+    nfish = binned_locomotion.shape[-1] // 3
+
+    # 1. Get indices and output array
+    locomotion = np.empty((binned_locomotion.shape))
+    # locs indices
+    lin = [3 * x for x in range(nfish)]
+    ang = [3 * x + 1 for x in range(nfish)]
+    ori = [3 * x + 2 for x in range(nfish)]
+
+    # 2. linear
+    # get mean bin values
+    bin_vals_lin = np.empty(n_bins_lin)
+    bins_lin = get_bins(bins_range_lin, n_bins_lin)
+    # add mean of bin distance to each bin start
+    bin_dis_lin = (bins_lin[1:] - bins_lin[:-1]) / 2
+    bin_vals_lin[1:-1] = bins_lin[:-1] + bin_dis_lin
+    # for edge cases add/subtract previous bin mean double (arbitrary)
+    bin_vals_lin[0] = bins_lin[0] - 2 * bin_dis_lin[0]
+    bin_vals_lin[-1] = bins_lin[-1] + 2 * bin_dis_lin[-1]
+    # convert
+    locomotion[:, lin] = bin_vals_lin[binned_locomotion[:, lin]]
+
+    # 3. angular
+    bin_vals_ang = np.empty(n_bins_ang)
+    bins_ang = get_bins((0, 2 * np.pi), n_bins_ang + 2)
+    # add mean of bin distance to each bin start
+    bin_dis_ang = (bins_ang[1:] - bins_ang[:-1]) / 2
+    bin_vals_ang = bins_ang[:-1] + bin_dis_ang
+    # convert
+    locomotion[:, ang] = bin_vals_ang[binned_locomotion[:, ang]]
+
+    # 3. orientation
+    bin_vals_ori = np.empty(n_bins_ori)
+    bins_ori = get_bins((0, 2 * np.pi), n_bins_ori + 2)
+    # add mean of bin distance to each bin start
+    bin_dis_ori = (bins_ori[1:] - bins_ori[:-1]) / 2
+    bin_vals_ori = bins_ori[:-1] + bin_dis_ori
+    # convert
+    locomotion[:, ori] = bin_vals_ori[binned_locomotion[:, ori]]
+
+    return locomotion
 
 
 if __name__ == "__main__":
