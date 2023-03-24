@@ -234,7 +234,7 @@ def bin_loc(
     nfish = locomotion.shape[-1] // 3
 
     # 1. Get indices and output array
-    binned_loc = np.empty((locomotion.shape), np.int8)
+    binned_loc = np.empty((locomotion.shape), np.int32)
     # locs indices
     lin = [3 * x for x in range(nfish)]
     ang = [3 * x + 1 for x in range(nfish)]
@@ -244,12 +244,12 @@ def bin_loc(
     bins_lin = get_bins(bins_range_lin, n_bins_lin)
     binned_loc[:, lin] = np.digitize(locomotion[:, lin], bins_lin)
     # 3. Angular
-    # (do not require 2 extra bins as all values are [0,2pi),
+    # (do not require one extra bin as all values are [0,2pi),
     #  thus can create more within the linspace)
-    bins_ang = get_bins((0, 2 * np.pi), n_bins_ang + 2)
+    bins_ang = get_bins((0, 2 * np.pi), n_bins_ang + 1)
     binned_loc[:, ang] = np.digitize(locomotion[:, ang], bins_ang)
     # 4. Orientation
-    bins_ori = get_bins((0, 2 * np.pi), n_bins_ori + 2)
+    bins_ori = get_bins((0, 2 * np.pi), n_bins_ori + 1)
     binned_loc[:, ori] = np.digitize(locomotion[:, ori], bins_ori)
 
     return binned_loc
@@ -317,19 +317,21 @@ def unbin_loc(
 
     # 3. angular
     bin_vals_ang = np.empty(n_bins_ang)
-    bins_ang = get_bins((0, 2 * np.pi), n_bins_ang + 2)
+    bins_ang = get_bins((0, 2 * np.pi), n_bins_ang + 1)
     # add mean of bin distance to each bin start
     bin_dis_ang = (bins_ang[1:] - bins_ang[:-1]) / 2
-    bin_vals_ang = bins_ang[:-1] + bin_dis_ang
+    bin_vals_ang[1:] = bins_ang[:-1] + bin_dis_ang
+    bin_vals_ang[0] = 0  # values in bin 0 cannot be below or above 0 => 0
     # convert
     locomotion[:, ang] = bin_vals_ang[binned_locomotion[:, ang]]
 
     # 3. orientation
     bin_vals_ori = np.empty(n_bins_ori)
-    bins_ori = get_bins((0, 2 * np.pi), n_bins_ori + 2)
+    bins_ori = get_bins((0, 2 * np.pi), n_bins_ori + 1)
     # add mean of bin distance to each bin start
     bin_dis_ori = (bins_ori[1:] - bins_ori[:-1]) / 2
-    bin_vals_ori = bins_ori[:-1] + bin_dis_ori
+    bin_vals_ori[1:] = bins_ori[:-1] + bin_dis_ori
+    bin_vals_ori[0] = 0  # values in bin 0 cannot be below or above 0 => 0
     # convert
     locomotion[:, ori] = bin_vals_ori[binned_locomotion[:, ori]]
 
