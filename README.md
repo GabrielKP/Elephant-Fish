@@ -59,28 +59,12 @@ We managed to do and implement following:
 ```bash
 conda create -n ef python=3.9
 conda activate ef
+
+# install torch
+# https://pytorch.org/get-started/locally/
+
 pip install -r requirements.txt
 ```
-
-These dependencies will be needed for this project to work, make sure you have installed them correctly.
-
-- Python 3.6.10
-- sklearn
-- numpy
-- imageio
-- seaborn
-- matplotlib
-- scipy
-- h5py
-- keras
-- tensorflow 2.2.1
-- shap
-- collections
-- kneed
-
-For visualization:
-
-- opencv2 4.3.0.36 (opencv-python)
 
 # General Information
 
