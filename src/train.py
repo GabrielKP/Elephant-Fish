@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List, Union, Sequence, Tuple
 
 import numpy as np
@@ -8,8 +9,10 @@ from torch.utils.data import DataLoader, Dataset
 
 import load
 import locomotion
+import visualization
 from locomotion_data import LocDataset
 from model import FishSimple
+from simulation import SimulationSimple
 from utils import get_logger, to_device, get_device, to_tensor
 
 
@@ -64,6 +67,52 @@ def epoch(
         optim.step()
         epoch_loss += loss_total.detach().cpu().item()
     return epoch_loss / len(train_dl)
+
+
+def eval_visual(
+    model: FishSimple,
+    device: torch.device,
+    n_steps: int,
+    path_vid_out: str,
+    start_positions: Sequence,
+    start_locomotion: Sequence,
+) -> None:
+    start_positions = np.array(start_positions)
+    start_locomotion = np.array(start_locomotion)
+
+    # get sim
+    sim = SimulationSimple(
+        model=model,
+        n_bins_lin=model.n_bins_lin,
+        n_bins_ang=model.n_bins_ang,
+        n_bins_ori=model.n_bins_ori,
+        device=device,
+    )
+
+    # run
+    binned_loc = sim.run(n_steps, start_locomotion)
+
+    # unbin
+    unbinned_loc = locomotion.unbin_loc(
+        binned_locomotion=binned_loc,
+        n_bins_lin=model.n_bins_lin,
+        n_bins_ang=model.n_bins_ang,
+        n_bins_ori=model.n_bins_ori,
+    )
+
+    # to cartesian
+    tracks = locomotion.convLocToCart(
+        unbinned_loc,
+        start_positions,
+    )
+
+    # add on video
+    visualization.addTracksOnTank(
+        path_output_video=path_vid_out,
+        tracks=tracks,
+        nfish=1,
+        skeleton=[(0, 1)],
+    )
 
 
 def get_dataset(
@@ -143,12 +192,33 @@ def train(config: Dict[str, Union[float, str, int]]):
 
     loss_eval = eval(test_dl, model, device)
     log.info(f"Initial eval loss: {loss_eval:2.4f}")
+    start_positions = np.array([647.72, 121.83, 625.18, 115.30])
+    eval_vid_path = os.path.join(config["visual_eval_dir"], "before.mp4")
+    eval_visual(
+        model,
+        device,
+        n_steps=300,
+        path_vid_out=eval_vid_path,
+        start_positions=start_positions,
+        start_locomotion=[1, 0, 0],
+    )
+    log.info(f"Visual evaluation saved to {eval_vid_path}")
     log.info("Starting training")
     for e in range(1, config["n_epochs"] + 1):
         loss_train = epoch(train_dl, model, optim, device)
         loss_eval = eval(test_dl, model, device)
         log.info(f"{e:3} | Train: {loss_train:2.4f} | Test: {loss_eval:2.4f}")
     log.info(f"Final eval loss: {loss_eval:2.4f}")
+    eval_vid_path = os.path.join(config["visual_eval_dir"], "after.mp4")
+    eval_visual(
+        model,
+        device,
+        n_steps=300,
+        path_vid_out=eval_vid_path,
+        start_positions=start_positions,
+        start_locomotion=[1, 0, 0],
+    )
+    log.info(f"Visual evaluation saved to {eval_vid_path}")
 
     return model
 
@@ -174,5 +244,7 @@ if __name__ == "__main__":
         "lr": 0.001,
         "seed": 123,
         "device": "cpu",
+        # visual eval
+        "visual_eval_dir": "videos/eval/",
     }
     train(config)
