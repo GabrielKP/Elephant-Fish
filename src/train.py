@@ -70,6 +70,7 @@ def epoch(
 
 
 def eval_visual(
+    config: Dict,
     model: FishSimple,
     device: torch.device,
     n_steps: int,
@@ -90,7 +91,12 @@ def eval_visual(
     )
 
     # run
-    binned_loc = sim.run(n_steps, start_locomotion)
+    binned_loc = sim.run(
+        n_steps,
+        start_locomotion,
+        sample=config["sample"],
+        temperature=config["temperature"],
+    )
 
     # unbin
     unbinned_loc = locomotion.unbin_loc(
@@ -112,6 +118,7 @@ def eval_visual(
         tracks=tracks,
         nfish=1,
         skeleton=[(0, 1)],
+        fish_point_size=[1, 2],
     )
 
 
@@ -211,6 +218,7 @@ def train(config: Dict[str, Union[float, str, int]]):
     log.info(f"Final eval loss: {loss_eval:2.4f}")
     eval_vid_path = os.path.join(config["visual_eval_dir"], "after.mp4")
     eval_visual(
+        config,
         model,
         device,
         n_steps=300,
@@ -246,5 +254,7 @@ if __name__ == "__main__":
         "device": "cpu",
         # visual eval
         "visual_eval_dir": "videos/eval/",
+        "sample": True,
+        "temperature": 0.6,
     }
     train(config)
