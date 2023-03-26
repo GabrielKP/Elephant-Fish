@@ -90,10 +90,10 @@ class SimulationSimple:
                         list(range(self.n_bins_lin)), probs_lin, k=1
                     )[0]
                     binned_ang = choices(
-                        list(range(self.n_bins_ang)), probs_lin, k=1
+                        list(range(self.n_bins_ang)), probs_ang, k=1
                     )[0]
                     binned_ori = choices(
-                        list(range(self.n_bins_ori)), probs_lin, k=1
+                        list(range(self.n_bins_ori)), probs_ori, k=1
                     )[0]
                 else:
                     binned_lin = torch.argmax(probs_lin, -1).cpu().item()
