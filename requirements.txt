@@ -12,3 +12,4 @@ kneed
 shap
 black
 pre-commit
+tqdm

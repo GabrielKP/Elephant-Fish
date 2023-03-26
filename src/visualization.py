@@ -1,10 +1,11 @@
 import os
 import sys
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import cv2
+from tqdm import trange
 
 import load
 
@@ -130,7 +131,7 @@ def addTracksOnTank(
     nfish: int = 3,
     fps: int = 30,
     dimension: Tuple[int, int] = (960, 720),
-    fish_point_size: int = 1,
+    fish_point_size: Union[int, List[int]] = 1,
     show_video_during_rendering: bool = False,
     skeleton: List[Tuple[int, int]] = None,
     path_raycasts: str = None,
@@ -141,6 +142,9 @@ def addTracksOnTank(
     Lines are created between indices for each point.
     Fishskeleton: [(0,1), (0,2), (0,3), (1,2), (1,3), (2,4), (3,5), (2,6), (3,7), (6,8), (7,8), (8,9)]
     Only Center and Head: [(0,1)]
+    fish_point_size: int | List[int]
+        either same size for every point, or the sizes
+        for each point in order of nodes
     """
     row, col = tracks.shape
     assert row >= 1
@@ -168,22 +172,22 @@ def addTracksOnTank(
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(path_output_video, fourcc, fps, dimension)
 
+    # fish point sizes
+    if isinstance(fish_point_size, int):
+        fish_point_size = [fish_point_size] * nnodes
+
     # Process video
     colors = [(0, 255, 255), (0, 255, 0), (0, 0, 255)]
-    i = 0
-    while i < row:
-        if i % 1000 == 0:
-            print("Frame: ", i)
-
+    for idx_frame in trange(row, desc="rendering video", colour="green"):
         frame = img.copy()
         for f in range(nfish):
             points = []
             for n in range(nnodes // 2):
-                x = int(tracks[i, f * nnodes + 2 * n])
-                y = int(tracks[i, f * nnodes + 2 * n + 1])
+                x = int(tracks[idx_frame, f * nnodes + 2 * n])
+                y = int(tracks[idx_frame, f * nnodes + 2 * n + 1])
                 points.append((x, y))
-            for p in points:
-                frame = cv2.circle(frame, p, fish_point_size, colors[f], -1)
+            for p, p_size in zip(points, fish_point_size):
+                frame = cv2.circle(frame, p, p_size, colors[f], -1)
             # Lines between points
             if skeleton is not None:
                 for p1, p2 in skeleton:
@@ -196,7 +200,7 @@ def addTracksOnTank(
                     range(21 * 3 + f * 15, 21 * 3 + (f + 1) * 15)
                 )
                 frame = addRaycasts(
-                    raycasts.to_numpy()[i, indices],
+                    raycasts.to_numpy()[idx_frame, indices],
                     frame,
                     points[1],
                     max_view_range,
@@ -209,7 +213,6 @@ def addTracksOnTank(
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
-        i += 1
 
     out.release()
     cv2.destroyAllWindows()
