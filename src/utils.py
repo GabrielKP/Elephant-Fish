@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Dict, Union, Sequence
+import os
+from typing import Any, Dict, List, Union, Sequence
 
 import numpy as np
 import torch
@@ -84,3 +85,17 @@ def to_tensor(
         key: torch.tensor(value, dtype=dtype) if is_sequence(value) else value
         for key, value in items.items()
     }
+
+
+def check_make_dirs(
+    dirs: Union[str, List[str]], verbose: bool = True, isdir: bool = True
+) -> None:
+    if not isinstance(dirs, list):
+        dirs = [dirs]
+    for path in dirs:
+        if not isdir:
+            path = os.path.dirname(path)
+        if path != "" and not os.path.exists(path):
+            os.makedirs(path)
+        if verbose:
+            log.info(f"Output path: {path}")
