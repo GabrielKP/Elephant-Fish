@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
 
 import torch
 import torch.nn as nn
@@ -82,3 +82,29 @@ class FishSimple(nn.Module):
         with open(path_config, "r") as f_in:
             saved_config = json.load(f_in)
         return saved_config
+
+    @staticmethod
+    def from_dir(dir: str, **override_kwargs) -> "FishSimple":
+        """Load config and initialize Fish from it.
+
+        Parameters
+        ----------
+        dir : str
+            path to model dir
+        **override kwargs
+            all additional kwargs are used to update the
+            loaded config
+        """
+        # load and update config
+        path_config = os.path.join(dir, "config.json")
+        with open(path_config, "r") as f_in:
+            saved_config: Dict = json.load(f_in)
+        saved_config.update(override_kwargs)
+
+        # init model
+        model = FishSimple(saved_config)
+
+        # init savedict
+        model.load(saved_config)
+
+        return model
