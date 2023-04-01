@@ -343,7 +343,7 @@ def plot_tankpositions(tracks, multipletracksets=False):
     fig.subplots_adjust(top=0.91)
     ax.set_xlim(0, 960)
     ax.set_ylim(0, 720)
-    seaborn.kdeplot(x_pos, y_pos, n_levels=25, shade=True, ax=ax)
+    seaborn.kdeplot(x=x_pos, y=y_pos, n_levels=25, shade=True, ax=ax)
     return fig
 
 
@@ -362,7 +362,7 @@ def plot_velocities(tracks, clusterfile=None, multipletracksets=False):
         assert tracks.shape[-1] % 4 == 0
         nfish = int(tracks.shape[-1] / 4)
 
-        locs = locomotion.getLocomotion(tracks, None)
+        locs = locomotion.getnLoc(tracks, nnodes=1, nfish=nfish)
 
         # Get dem indices
         i_lin = [x * 3 for x in range(nfish)]
@@ -379,7 +379,7 @@ def plot_velocities(tracks, clusterfile=None, multipletracksets=False):
             assert trackset.shape[-1] % 4 == 0
             nfish = int(trackset.shape[-1] / 4)
 
-            locs = locomotion.getLocomotion(trackset, None)
+            locs = locomotion.getnLoc(tracks, nnodes=1, nfish=nfish)
 
             # Get dem indices
             i_lin = [x * 3 for x in range(nfish)]
@@ -526,18 +526,19 @@ def create_plots(
     tracksCenter = tracks[:, i_center_values]
 
     # make and save graphs
-    save_figure(plot_iid(tracksCenter), path=os.path.join(direc, "iid.png"))
-    save_figure(
-        plot_follow(tracksCenter), path=os.path.join(direc, "follow.png")
-    )
-    save_figure(
-        plot_follow_iid(tracksCenter),
-        path=os.path.join(direc, "follow_iid.png"),
-    )
-    save_figure(
-        plot_tlvc_iid(tracksCenter, time_step, tau_seconds),
-        path=os.path.join(direc, "tlvc_iid.png"),
-    )
+    if nfish > 1:
+        save_figure(plot_iid(tracksCenter), path=os.path.join(direc, "iid.png"))
+        save_figure(
+            plot_follow(tracksCenter), path=os.path.join(direc, "follow.png")
+        )
+        save_figure(
+            plot_follow_iid(tracksCenter),
+            path=os.path.join(direc, "follow_iid.png"),
+        )
+        save_figure(
+            plot_tlvc_iid(tracksCenter, time_step, tau_seconds),
+            path=os.path.join(direc, "tlvc_iid.png"),
+        )
     save_figure(
         plot_tankpositions(tracksCenter),
         path=os.path.join(direc, "tankpostions.png"),
