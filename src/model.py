@@ -1,8 +1,14 @@
+import os
+import json
 from typing import Any, Dict, Tuple
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from utils import check_make_dirs, get_logger
+
+log = get_logger(__name__)
 
 
 class FishSimple(nn.Module):
@@ -54,3 +60,25 @@ class FishSimple(nn.Module):
         out_ori = self.fc_out_ori(hidden)
 
         return (out_lin, out_ang, out_ori)
+
+    def save(self, config: Dict[str, Any]) -> None:
+        dir = config["model_dir"]
+        check_make_dirs(dir, verbose=False)
+        path_statedict = os.path.join(dir, "statedict.pt")
+        torch.save(self.state_dict(), path_statedict)
+        log.info(f"Saved statedict to {path_statedict}")
+
+        path_config = os.path.join(dir, "config.json")
+        with open(path_config, "w") as f_out:
+            json.dump(config, f_out, indent=4)
+        log.info(f"Saved config to to {path_config}")
+
+    def load(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        dir = config["model_dir"]
+        path_statedict = os.path.join(dir, "statedict.pt")
+        self.load_state_dict(torch.load(path_statedict))
+
+        path_config = os.path.join(dir, "config.json")
+        with open(path_config, "r") as f_in:
+            saved_config = json.load(f_in)
+        return saved_config

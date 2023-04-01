@@ -228,6 +228,8 @@ def train(config: Dict[str, Union[float, str, int]]):
     )
     log.info(f"Visual evaluation saved to {eval_vid_path}")
 
+    model.save(config)
+
     return model
 
 
