@@ -1,17 +1,19 @@
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 
-import locomotion
-import reader
+from src.locomotion import getnLoc
+from src.reader import extract_coordinates
 
 
 def load_raycasts(path: str) -> pd.DataFrame:
     return pd.read_csv(path, sep=";")
 
 
-def load_locomotions(path: str) -> np.ndarray:
-    tracks = reader.extract_coordinates(
-        "data/sleap/diff1.h5",
+def load_locomotions(path: str = "data/sleap/diff1.h5") -> np.ndarray:
+    tracks = extract_coordinates(
+        path,
         [b"head", b"center"],
     )
-    return locomotion.getnLoc(tracks, 1)
+    return getnLoc(tracks, 1)

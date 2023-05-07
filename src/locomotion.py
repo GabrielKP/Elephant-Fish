@@ -2,7 +2,7 @@ from typing import Tuple, List
 
 import numpy as np
 
-from functions import (
+from src.functions import (
     getAngle,
     getDistance,
     convPolarToCart,

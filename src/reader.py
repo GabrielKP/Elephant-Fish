@@ -4,7 +4,7 @@ from typing import List
 import h5py
 import numpy as np
 
-import functions
+from src.functions import getDistance, get_distances
 
 
 def read_slp(file, loud=False):
@@ -276,11 +276,11 @@ def correct_outlier(data, col1, col2, i1, max_tolerated_movement):
     replace_point_by_middle(data, col1, i1, i1 + 1, i1 + 2)
     replace_point_by_middle(data, col2, i1, i1 + 1, i1 + 2)
 
-    dis_1 = functions.getDistance(
+    dis_1 = getDistance(
         data[i1, col1], data[i1, col2], data[i1 + 1, col1], data[i1 + 1, col2]
     )
     if i1 + 2 < n_rows:
-        dis_2 = functions.getDistance(
+        dis_2 = getDistance(
             data[i1 + 1, col1],
             data[i1 + 1, col2],
             data[i1 + 2, col1],
@@ -352,7 +352,7 @@ def correct_wrongly_interpolated_outliers(
         fill_vector_in(data, col2, i_first, i_last)
 
     # Check if distance for first value has gotten better, (others are checked later anyway)
-    dis = functions.getDistance(
+    dis = getDistance(
         data[i_first, col1],
         data[i_first, col2],
         data[i_first + 1, col1],
@@ -377,7 +377,7 @@ def interpolate_outliers_rec(data, max_tolerated_movement=20, verbose=False):
     n_rows, n_cols = data.shape
 
     # Get distances of all points between 2 frames
-    dist = functions.get_distances(data)
+    dist = get_distances(data)
 
     if verbose:
         print("Before:")
@@ -394,7 +394,7 @@ def interpolate_outliers_rec(data, max_tolerated_movement=20, verbose=False):
 
         for outlier in i_out:
             # recheck if outlier candidate is still valid, often when fixing an outlier you fix it for the next distance aswell
-            dis = functions.getDistance(
+            dis = getDistance(
                 data[outlier, col1],
                 data[outlier, col2],
                 data[outlier + 1, col1],
@@ -424,7 +424,7 @@ def interpolate_outliers_rec(data, max_tolerated_movement=20, verbose=False):
 
     # To check, we recalculate distances and look if there is any outliers still left
     if verbose:
-        dist = functions.get_distances(data)
+        dist = get_distances(data)
         print("After:")
         print("avg:", np.mean(dist, axis=0))
         print("max:", np.amax(dist, axis=0))
@@ -456,7 +456,7 @@ def avg_dis(data, col1, col2, i_start, i_end, n_points):
     for given amount of n_points
     """
     assert n_points > 1
-    return functions.getDistance(
+    return getDistance(
         data[i_start, col1],
         data[i_start, col2],
         data[i_end, col1],
@@ -478,7 +478,7 @@ def interpolate_outliers(data, max_tolerated_movement=20, verbose=False):
     n_rows, n_cols = data.shape
 
     # Get distances of all points between 2 frames
-    dist = functions.get_distances(data)
+    dist = get_distances(data)
 
     if verbose:
         print("Before:")
@@ -495,7 +495,7 @@ def interpolate_outliers(data, max_tolerated_movement=20, verbose=False):
 
         for outlier in i_out:
             # recheck if outlier candidate is still valid, often when fixing an outlier you fix it for the next distance aswell
-            curr_dis = functions.getDistance(
+            curr_dis = getDistance(
                 data[outlier, col1],
                 data[outlier, col2],
                 data[outlier + 1, col1],
@@ -536,7 +536,7 @@ def interpolate_outliers(data, max_tolerated_movement=20, verbose=False):
 
     # To check, we recalculate distances and look if there is any outliers still left
     if verbose:
-        dist = functions.get_distances(data)
+        dist = get_distances(data)
         print("After:")
         print("avg:", np.mean(dist, axis=0))
         print("max:", np.amax(dist, axis=0))

@@ -6,9 +6,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-import locomotion
-from model import FishSimple
-from utils import to_device
+from src.locomotion import bin_loc
+from src.models.fish_simple import FishSimple
 
 
 @dataclass
@@ -64,7 +63,7 @@ class SimulationSimple:
         # start_ori =
 
         prev_loc = torch.tensor(
-            locomotion.bin_loc(
+            bin_loc(
                 start_locomotion[None, :],
                 self.n_bins_lin,
                 self.n_bins_ang,

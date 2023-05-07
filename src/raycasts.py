@@ -252,6 +252,14 @@ def get_egocentric_wall_ray_orientations(
     return egocentric_wall_ray_orientations
 
 
+def bin_wall_rays(
+    wall_distances: np.ndarray, wall_intersections: np.ndarray, max_view: int
+) -> np.ndarray:
+    # wall_distances.shape = (n_positions, n_wallrays)
+    # wall_intersections.shape = (n_positions, n_wallrays, 2)
+    pass
+
+
 def main():
     n_wallrays = 15
     field_of_view = (3 / 4 * -np.pi, 3 / 4 * np.pi)

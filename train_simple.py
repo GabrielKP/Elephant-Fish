@@ -7,13 +7,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 
-import load
-import locomotion
-import visualization
-from locomotion_data import LocDataset
-from model import FishSimple
-from simulation import SimulationSimple
-from utils import get_logger, to_device, get_device, to_tensor
+from src.load import load_locomotions
+from src.locomotion import unbin_loc, convLocToCart, bin_loc
+from src.visualization import addTracksOnTank
+from src.locomotion_data import LocDataset
+from src.models.fish_simple import FishSimple
+from src.simulation import SimulationSimple
+from src.utils import get_logger, to_device, get_device, to_tensor
 
 
 log = get_logger(__name__)
@@ -99,7 +99,7 @@ def eval_visual(
     )
 
     # unbin
-    unbinned_loc = locomotion.unbin_loc(
+    unbinned_loc = unbin_loc(
         binned_locomotion=binned_loc,
         n_bins_lin=model.n_bins_lin,
         n_bins_ang=model.n_bins_ang,
@@ -107,13 +107,13 @@ def eval_visual(
     )
 
     # to cartesian
-    tracks = locomotion.convLocToCart(
+    tracks = convLocToCart(
         unbinned_loc,
         start_positions,
     )
 
     # add on video
-    visualization.addTracksOnTank(
+    addTracksOnTank(
         path_output_video=path_vid_out,
         tracks=tracks,
         nfish=1,
@@ -125,9 +125,9 @@ def eval_visual(
 def get_dataset(
     config: Dict[str, Union[float, str, int]]
 ) -> Tuple[Dataset, Dataset]:
-    loc = load.load_locomotions(config["path_tracks"])
+    loc = load_locomotions(config["path_tracks"])
     # bin locomotion
-    binned_loc = locomotion.bin_loc(
+    binned_loc = bin_loc(
         loc, config["n_bins_lin"], config["n_bins_ang"], config["n_bins_ori"]
     )
     # separate fish
@@ -202,6 +202,7 @@ def train(config: Dict[str, Union[float, str, int]]):
     start_positions = np.array([647.72, 121.83, 625.18, 115.30])
     eval_vid_path = os.path.join(config["visual_eval_dir"], "before.mp4")
     eval_visual(
+        config,
         model,
         device,
         n_steps=300,

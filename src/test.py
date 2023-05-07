@@ -63,7 +63,6 @@ def test_diff1_loc():
             # (7, 8),
             # (8, 9),
         ],
-        path_raycasts="data/raycast/diff1.csv",
     )
     visualization.addTracksOnTank(
         "videos/test/diff1_sleap.mp4",

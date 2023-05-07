@@ -1,13 +1,11 @@
 import os
 import sys
-from typing import List, Tuple, Union
+from typing import List, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import cv2
 from tqdm import trange
-
-import load
 
 
 def addTracksOnVideo(
@@ -107,6 +105,7 @@ def addTracksOnTank(
     skeleton: List[Tuple[int, int]] = None,
     wall_intersections: np.ndarray = None,
     wall_distances: np.ndarray = None,
+    config: Dict = {},
 ):
     """
     Takes tracks and adds them on video
@@ -172,7 +171,7 @@ def addTracksOnTank(
                         (0, 0, 255),
                         -1,
                     )
-                    if wall_distances[idx_frame, wall_ray] < 90:
+                    if wall_distances[idx_frame, wall_ray] < config["max_view"]:
                         color = (0, 0, 0)
                     else:
                         color = (255, 255, 255)
