@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from random import choices
-from typing import List, Union, Sequence
+from typing import Dict, List, Union, Sequence
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.locomotion import bin_loc
+from src.locomotion import bin_loc, unbin_loc, convLocToCart
 from src.models.fish_simple import FishSimple
 
 
@@ -107,3 +107,47 @@ class SimulationSimple:
                 prev_loc = torch.tensor((binned_lin, binned_ang, binned_ori))
 
         return binned_locs_out
+
+
+def run_simulation(
+    config: Dict[str, Union[str, float, int]],
+    model: FishSimple,
+    device: torch.device,
+    start_positions: Sequence,
+    start_locomotion: Sequence,
+) -> np.ndarray:
+    start_positions = np.array(start_positions)
+    start_locomotion = np.array(start_locomotion)
+
+    # get sim
+    sim = SimulationSimple(
+        model=model,
+        n_bins_lin=model.n_bins_lin,
+        n_bins_ang=model.n_bins_ang,
+        n_bins_ori=model.n_bins_ori,
+        device=device,
+    )
+
+    # run
+    binned_loc = sim.run(
+        config["n_steps"],
+        start_locomotion,
+        sample=config["sample"],
+        temperature=config["temperature"],
+    )
+
+    # unbin
+    unbinned_loc = unbin_loc(
+        binned_locomotion=binned_loc,
+        n_bins_lin=model.n_bins_lin,
+        n_bins_ang=model.n_bins_ang,
+        n_bins_ori=model.n_bins_ori,
+    )
+
+    # to cartesian
+    tracks = convLocToCart(
+        unbinned_loc,
+        start_positions,
+    )
+
+    return tracks

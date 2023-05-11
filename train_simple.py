@@ -12,7 +12,7 @@ from src.locomotion import unbin_loc, convLocToCart, bin_loc
 from src.visualization import addTracksOnTank
 from src.locomotion_data import LocDataset
 from src.models.fish_simple import FishSimple
-from src.simulation import SimulationSimple
+from src.simulations.simulation_simple import SimulationSimple
 from src.utils import get_logger, to_device, get_device, to_tensor
 
 
@@ -69,7 +69,7 @@ def epoch(
     return epoch_loss / len(train_dl)
 
 
-def eval_visual(
+def visualize_simulation(
     config: Dict,
     model: FishSimple,
     device: torch.device,
@@ -201,7 +201,7 @@ def train(config: Dict[str, Union[float, str, int]]):
     log.info(f"Initial eval loss: {loss_eval:2.4f}")
     start_positions = np.array([647.72, 121.83, 625.18, 115.30])
     eval_vid_path = os.path.join(config["visual_eval_dir"], "before.mp4")
-    eval_visual(
+    visualize_simulation(
         config,
         model,
         device,
@@ -218,7 +218,7 @@ def train(config: Dict[str, Union[float, str, int]]):
         log.info(f"{e:3} | Train: {loss_train:2.4f} | Test: {loss_eval:2.4f}")
     log.info(f"Final eval loss: {loss_eval:2.4f}")
     eval_vid_path = os.path.join(config["visual_eval_dir"], "after.mp4")
-    eval_visual(
+    visualize_simulation(
         config,
         model,
         device,

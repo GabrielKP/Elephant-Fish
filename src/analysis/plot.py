@@ -6,11 +6,11 @@ import seaborn
 import numpy as np
 import pandas as pd
 
-from analysis import calc_follow, calc_iid, calc_tlvc
-from functions import convertRadiansRange, get_indices, readClusters
-import reader
-import locomotion
-from utils import check_make_dirs
+from src.analysis.utils import calc_follow, calc_iid, calc_tlvc
+from src.functions import convertRadiansRange, get_indices, readClusters
+from src.reader import extract_coordinates
+from src.locomotion import getnLoc
+from src.utils import check_make_dirs
 
 
 def plot_follow(tracks, max_tolerated_movement=20, multipletracksets=False):
@@ -362,7 +362,7 @@ def plot_velocities(tracks, clusterfile=None, multipletracksets=False):
         assert tracks.shape[-1] % 4 == 0
         nfish = int(tracks.shape[-1] / 4)
 
-        locs = locomotion.getnLoc(tracks, nnodes=1, nfish=nfish)
+        locs = getnLoc(tracks, nnodes=1, nfish=nfish)
 
         # Get dem indices
         i_lin = [x * 3 for x in range(nfish)]
@@ -379,7 +379,7 @@ def plot_velocities(tracks, clusterfile=None, multipletracksets=False):
             assert trackset.shape[-1] % 4 == 0
             nfish = int(trackset.shape[-1] / 4)
 
-            locs = locomotion.getnLoc(tracks, nnodes=1, nfish=nfish)
+            locs = getnLoc(tracks, nnodes=1, nfish=nfish)
 
             # Get dem indices
             i_lin = [x * 3 for x in range(nfish)]
@@ -592,30 +592,20 @@ def create_all_plots_together(
         path = path + "/"
 
     # Load data
-    tracks1 = reader.extract_coordinates(
-        "data/sleap_1_diff2.h5", [b"head", b"center"]
-    )
-    tracks2 = reader.extract_coordinates(
-        "data/sleap_1_diff2.h5", [b"head", b"center"]
-    )
-    tracks3 = reader.extract_coordinates(
+    tracks1 = extract_coordinates("data/sleap_1_diff2.h5", [b"head", b"center"])
+    tracks2 = extract_coordinates("data/sleap_1_diff2.h5", [b"head", b"center"])
+    tracks3 = extract_coordinates(
         "data/sleap_1_diff3.h5", [b"head", b"center"]
     )[0:17000]
-    tracks4 = reader.extract_coordinates(
+    tracks4 = extract_coordinates(
         "data/sleap_1_diff4.h5", [b"head", b"center"]
     )[120:]
-    tracks5 = reader.extract_coordinates(
-        "data/sleap_1_same1.h5", [b"head", b"center"]
-    )
-    tracks6 = reader.extract_coordinates(
+    tracks5 = extract_coordinates("data/sleap_1_same1.h5", [b"head", b"center"])
+    tracks6 = extract_coordinates(
         "data/sleap_1_same3.h5", [b"head", b"center"]
     )[130:]
-    tracks7 = reader.extract_coordinates(
-        "data/sleap_1_same4.h5", [b"head", b"center"]
-    )
-    tracks8 = reader.extract_coordinates(
-        "data/sleap_1_same5.h5", [b"head", b"center"]
-    )
+    tracks7 = extract_coordinates("data/sleap_1_same4.h5", [b"head", b"center"])
+    tracks8 = extract_coordinates("data/sleap_1_same5.h5", [b"head", b"center"])
 
     # Get Centerpoints
     nfish = 3
@@ -740,30 +730,20 @@ def create_all_plots_separate(clusterfile="data/clusters.txt"):
     """
     Creates plots for every video seperatly
     """
-    tracks1 = reader.extract_coordinates(
-        "data/sleap_1_diff1.h5", [b"head", b"center"]
-    )
-    tracks2 = reader.extract_coordinates(
-        "data/sleap_1_diff2.h5", [b"head", b"center"]
-    )
-    tracks3 = reader.extract_coordinates(
+    tracks1 = extract_coordinates("data/sleap_1_diff1.h5", [b"head", b"center"])
+    tracks2 = extract_coordinates("data/sleap_1_diff2.h5", [b"head", b"center"])
+    tracks3 = extract_coordinates(
         "data/sleap_1_diff3.h5", [b"head", b"center"]
     )[0:17000]
-    tracks4 = reader.extract_coordinates(
+    tracks4 = extract_coordinates(
         "data/sleap_1_diff4.h5", [b"head", b"center"]
     )[120:]
-    tracks5 = reader.extract_coordinates(
-        "data/sleap_1_same1.h5", [b"head", b"center"]
-    )
-    tracks6 = reader.extract_coordinates(
+    tracks5 = extract_coordinates("data/sleap_1_same1.h5", [b"head", b"center"])
+    tracks6 = extract_coordinates(
         "data/sleap_1_same3.h5", [b"head", b"center"]
     )[130:]
-    tracks7 = reader.extract_coordinates(
-        "data/sleap_1_same4.h5", [b"head", b"center"]
-    )
-    tracks8 = reader.extract_coordinates(
-        "data/sleap_1_same5.h5", [b"head", b"center"]
-    )
+    tracks7 = extract_coordinates("data/sleap_1_same4.h5", [b"head", b"center"])
+    tracks8 = extract_coordinates("data/sleap_1_same5.h5", [b"head", b"center"])
 
     create_plots(tracks1, path="figures/diff1", clusterfile="data/clusters.txt")
     create_plots(tracks2, path="figures/diff2", clusterfile="data/clusters.txt")

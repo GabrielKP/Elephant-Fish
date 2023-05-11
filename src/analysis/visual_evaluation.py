@@ -2,58 +2,12 @@ import os
 from typing import Dict, Union, Sequence
 
 import numpy as np
-import torch
 
-import locomotion
-import visualization
-import evaluation
-from utils import check_make_dirs, get_device
-from model import FishSimple
-from simulation import SimulationSimple
-
-
-def run_simulation(
-    config: Dict[str, Union[str, float, int]],
-    model: FishSimple,
-    device: torch.device,
-    start_positions: Sequence,
-    start_locomotion: Sequence,
-) -> np.ndarray:
-    start_positions = np.array(start_positions)
-    start_locomotion = np.array(start_locomotion)
-
-    # get sim
-    sim = SimulationSimple(
-        model=model,
-        n_bins_lin=model.n_bins_lin,
-        n_bins_ang=model.n_bins_ang,
-        n_bins_ori=model.n_bins_ori,
-        device=device,
-    )
-
-    # run
-    binned_loc = sim.run(
-        config["n_steps"],
-        start_locomotion,
-        sample=config["sample"],
-        temperature=config["temperature"],
-    )
-
-    # unbin
-    unbinned_loc = locomotion.unbin_loc(
-        binned_locomotion=binned_loc,
-        n_bins_lin=model.n_bins_lin,
-        n_bins_ang=model.n_bins_ang,
-        n_bins_ori=model.n_bins_ori,
-    )
-
-    # to cartesian
-    tracks = locomotion.convLocToCart(
-        unbinned_loc,
-        start_positions,
-    )
-
-    return tracks
+from src.visualization import addTracksOnTank
+from src.analysis.plot import create_plots
+from src.utils import check_make_dirs, get_device
+from src.models.fish_simple import FishSimple
+from src.simulations.simulation_simple import run_simulation
 
 
 def evaluate(config: Dict[str, Union[str, float, bool]]):
@@ -66,9 +20,7 @@ def evaluate(config: Dict[str, Union[str, float, bool]]):
         config, model, device, start_positions, start_locomotion
     )
     # get evaluation graphs
-    evaluation.create_plots(
-        tracks, direc=os.path.join(config["model_dir"], "plots")
-    )
+    create_plots(tracks, direc=os.path.join(config["model_dir"], "plots"))
     # put tracks on video
     if config.get("visualize", False):
         if config.get(config["visual_eval_dir"], None) is not None:
@@ -79,7 +31,7 @@ def evaluate(config: Dict[str, Union[str, float, bool]]):
             "<model_dir>", config["model_dir"]
         )
         check_make_dirs(path_output_video)
-        visualization.addTracksOnTank(
+        addTracksOnTank(
             path_output_video=path_output_video,
             tracks=tracks,
             nfish=1,
