@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict, List, Union, Sequence
+from typing import Any, Dict, List, Union, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -99,3 +99,12 @@ def check_make_dirs(
             os.makedirs(path)
         if verbose:
             log.info(f"Output path: {path}")
+
+
+def get_bins(bins_range: Tuple[int, int], n_bins: int) -> np.ndarray:
+    return np.linspace(
+        start=bins_range[0],
+        stop=bins_range[1],
+        num=n_bins - 1,
+        endpoint=True,
+    )

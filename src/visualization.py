@@ -184,7 +184,7 @@ def addTracksOnTank(
                     frame = cv2.ellipse(
                         frame,
                         points[1],
-                        (90, 90),
+                        (config["max_view"], config["max_view"]),
                         angle=0,
                         startAngle=0,
                         endAngle=360,

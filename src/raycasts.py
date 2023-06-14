@@ -5,6 +5,7 @@ import numpy as np
 import reader
 import visualization
 from functions import getAngles
+from utils import get_bins
 
 # lines are given as (point1,point2)
 TANK_BORDERS = np.array(
@@ -253,11 +254,39 @@ def get_egocentric_wall_ray_orientations(
 
 
 def bin_wall_rays(
-    wall_distances: np.ndarray, wall_intersections: np.ndarray, max_view: int
+    wall_distances: np.ndarray,
+    n_bins_wall_rays: int,
+    bins_range_wall_rays: Tuple[float, float],
 ) -> np.ndarray:
-    # wall_distances.shape = (n_positions, n_wallrays)
-    # wall_intersections.shape = (n_positions, n_wallrays, 2)
-    pass
+    # wall_distances.shape = (n_positions, n_wall_rays)
+
+    bins = get_bins(bins_range_wall_rays, n_bins_wall_rays)
+    binned_wall_rays = np.digitize(wall_distances, bins)
+
+    # binned_wall_rays.shape = (n_positions, n_wall_rays)
+    return binned_wall_rays
+
+
+def unbin_wall_rays(
+    binned_wall_rays: np.ndarray,
+    n_bins_wall_rays: int,
+    bins_range_wall_rays: Tuple[float, float],
+) -> np.ndarray:
+    # binned_wall_rays.shape = (n_positions, n_wall_rays)
+
+    bin_vals = np.empty(n_bins_wall_rays)
+    bins = get_bins(bins_range_wall_rays, n_bins_wall_rays)
+    # add mean of bin distance to each bin start
+    bin_dis = (bins[1:] - bins[:-1]) / 2
+    bin_vals[1:-1] = bins[:-1] + bin_dis
+    # for edge cases add/subtract previous bin mean double (arbitrary)
+    bin_vals[0] = bins[0] - 2 * bin_dis[0]
+    bin_vals[-1] = bins[-1] + 2 * bin_dis[-1]
+    # convert bins into values
+    wall_distances = bin_vals[binned_wall_rays]
+
+    # wall_distances.shape = (n_positions, n_wall_rays)
+    return wall_distances
 
 
 def main():
@@ -281,6 +310,20 @@ def main():
         tracks, egocentric_wall_ray_orientations
     )
 
+    n_bins_wall_rays = 90
+    bins_range_wall_rays = (0.0, 200)
+    binned_wall_distances = bin_wall_rays(
+        wall_distances,
+        n_bins_wall_rays,
+        bins_range_wall_rays,
+    )
+
+    wall_distances = unbin_wall_rays(
+        binned_wall_distances,
+        n_bins_wall_rays,
+        bins_range_wall_rays,
+    )
+
     visualization.addTracksOnTank(
         "videos/test/raycast.mp4",
         tracks,
@@ -288,6 +331,7 @@ def main():
         skeleton=[(0, 1)],
         wall_intersections=wall_intersections,
         wall_distances=wall_distances,
+        config={"max_view": 200},
     )
 
 
