@@ -4,7 +4,7 @@ from typing import List
 import h5py
 import numpy as np
 
-from functions import getDistance, get_distances
+from src.functions import getDistance, get_distances
 
 
 def read_slp(file, loud=False):

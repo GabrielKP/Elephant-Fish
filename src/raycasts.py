@@ -1,11 +1,11 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 
-import reader
-import visualization
-from functions import getAngles
-from utils import get_bins
+from src.reader import extract_coordinates
+from src.visualization import addTracksOnTank
+from src.functions import getAngles
+from src.utils import get_bins
 
 # lines are given as (point1,point2)
 TANK_BORDERS = np.array(
@@ -293,7 +293,7 @@ def main():
     n_wallrays = 15
     field_of_view = (3 / 4 * -np.pi, 3 / 4 * np.pi)
 
-    tracks = reader.extract_coordinates(
+    tracks = extract_coordinates(
         "data/sleap/diff1.h5",
         [
             b"head",
@@ -324,7 +324,7 @@ def main():
         bins_range_wall_rays,
     )
 
-    visualization.addTracksOnTank(
+    addTracksOnTank(
         "videos/test/raycast.mp4",
         tracks,
         nfish=1,
