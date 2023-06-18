@@ -54,8 +54,8 @@ def convLocToCart(loc: np.ndarray, startpoints: List[float]) -> np.ndarray:
     Output:
 
         [
-            [center1_x, center1_y, orientation1, ...]
-            [center1_x, center1_y, orientation1, ...]
+            [head1_x, head1_y, center1_x, center1_y, ...]
+            [head1_x, head1_y, center1_x, center1_y, ...]
             ...
         ]
     """
