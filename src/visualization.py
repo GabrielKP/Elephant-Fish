@@ -6,6 +6,8 @@ import numpy as np
 import cv2
 from tqdm import trange
 
+from src.utils import check_make_dirs
+
 
 def addTracksOnVideo(
     inputvideo,
@@ -135,6 +137,7 @@ def addTracksOnTank(
         wall_intersections = wall_intersections.astype(int)
 
     # Set up output
+    check_make_dirs(path_output_video, isdir=False)
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(path_output_video, fourcc, fps, dimension)
 
