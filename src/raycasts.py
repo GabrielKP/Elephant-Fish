@@ -84,7 +84,7 @@ def get_raycasts(
     egocentric_wall_ray_orientations: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     # current_positions.shape = (n_positions, 2) -> center_x, center_y
-    # orientations = (n_positions, 1)
+    # orientations = (n_positions)
     # egocentric_wall_rays_orientations = (n_wallrays)
     n_wall_rays = egocentric_wall_ray_orientations.shape[0]
     n_positions = current_positions.shape[0]
@@ -94,29 +94,26 @@ def get_raycasts(
         orientations[:, None] + egocentric_wall_ray_orientations[None, :]
     ) % (2 * np.pi)
 
-    # get arbitrary point in direction of wall ray
+    ## get arbitrary point in direction of wall ray (to have a line)
     wall_rays_point2_x = np.cos(allocentric_wall_ray_orientations)
     wall_rays_point2_y = np.sin(allocentric_wall_ray_orientations)
     # shape = (n_positions, n_wallrays)
-
-    # if center is fish, these are points on wall rays
     egocentric_wall_rays_point2 = (
         np.stack((wall_rays_point2_x, wall_rays_point2_y), axis=-1) * 10
     )
     # shape = (n_positions, n_wallrays, 2)
-
-    # if center is image, these are points on wall rays
+    # allocentric points on wall rays
     allocentric_wall_rays_point2 = (
         current_positions[:, None] + egocentric_wall_rays_point2
     )  # shape = (n_positions, n_wallrays, 2)
 
-    # compute intersects for every wall line independently
+    # compute intersects for every wall line and every ray independently
     border_intersects = list()
     for idx_wall in range(TANK_BORDERS.shape[0]):
         points1_wall = TANK_BORDERS[idx_wall, 0]  # (2)
         points2_wall = TANK_BORDERS[idx_wall, 1]  # (2)
 
-        # current positions act as point1
+        # current positions acts as point1
         points1_wall_ray = current_positions[
             :, None
         ]  # shape = (n_positions, 1, 2)
@@ -181,6 +178,7 @@ def get_raycasts(
 def raycasts_from_tracks(
     tracks: np.ndarray,
     egocentric_wall_ray_orientations: np.ndarray,
+    orientations: Optional[np.ndarray] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Parameters
@@ -194,6 +192,9 @@ def raycasts_from_tracks(
     egocentric_wall_ray_orientations : np.ndarray, shape = (n_wall_rays)
         Vector or radians describing directions of wall rays
         [wall_ray1_ori, wall_ray2_ori, ...]
+    orientations : np.ndarray, optional, default = `None`, shape(n_positions)
+        When orientations are passed, they are not computed additionally,
+        and tracks[:,0:2] are unused.
 
     Returns
     -------
@@ -205,13 +206,14 @@ def raycasts_from_tracks(
     n_positions = tracks.shape[0]
 
     # get fish orientations at each point
-    vec_look = tracks[:, 0:2] - tracks[:, 2:4]
-    allocentric_vec = np.empty((n_positions, 2))
-    allocentric_vec.fill(0)
-    allocentric_vec[:, 0] = 1
-    orientations = getAngles(
-        allocentric_vec, vec_look
-    )  # shape = (n_positions, 2)
+    if orientations is None:
+        vec_look = tracks[:, 0:2] - tracks[:, 2:4]
+        allocentric_vec = np.empty((n_positions, 2))
+        allocentric_vec.fill(0)
+        allocentric_vec[:, 0] = 1
+        orientations = getAngles(
+            allocentric_vec, vec_look
+        )  # shape = (n_positions)
 
     center_positions = tracks[:, 2:4]
 
