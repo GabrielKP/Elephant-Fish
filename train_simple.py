@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from src.load import load_locomotions
 from src.locomotion import unbin_loc, convLocToCart, bin_loc
 from src.visualization import addTracksOnTank
-from src.locomotion_data import LocDataset
+from src.torch_datasets import SimpleDataset
 from src.models.fish_simple import FishSimple
 from src.simulations.simulation_simple import SimulationSimple
 from src.utils import get_logger, to_device, get_device, to_tensor
@@ -151,7 +151,7 @@ def get_dataset(
     test_data = data[idcs_test]
     train_data = np.delete(data, idcs_test, axis=0)
 
-    return LocDataset(train_data), LocDataset(test_data)
+    return SimpleDataset(train_data), SimpleDataset(test_data)
 
 
 def collate_fn(

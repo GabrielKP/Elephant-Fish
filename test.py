@@ -1,12 +1,12 @@
 import numpy as np
 
-import reader
-import locomotion
-import visualization
+from src.reader import extract_coordinates
+from src.locomotion import getnLoc, convLocToCart, bin_loc, unbin_loc
+from src.visualization import addTracksOnTank
 
 
 def test_diff1_loc():
-    tracks = reader.extract_coordinates(
+    tracks = extract_coordinates(
         "data/sleap/diff1.h5",
         [
             b"head",
@@ -20,10 +20,10 @@ def test_diff1_loc():
             # b"tail_basis",
             # b"tail_end",
         ],
-    )[0:3000]
+    )[0:1000]
 
     # convert to locs
-    locs = locomotion.getnLoc(tracks, nnodes=1, nfish=3)
+    locs = getnLoc(tracks, nnodes=1, nfish=3)
 
     startpoints = np.array(
         [
@@ -43,9 +43,9 @@ def test_diff1_loc():
     )
 
     # convert back to cartesian
-    tracks_locs = locomotion.convLocToCart(locs, startpoints)
+    tracks_locs = convLocToCart(locs, startpoints)
 
-    visualization.addTracksOnTank(
+    addTracksOnTank(
         "videos/test/diff1_loc.mp4",
         tracks_locs,
         show_video_during_rendering=False,
@@ -64,7 +64,7 @@ def test_diff1_loc():
             # (8, 9),
         ],
     )
-    visualization.addTracksOnTank(
+    addTracksOnTank(
         "videos/test/diff1_sleap.mp4",
         tracks,
         show_video_during_rendering=False,
@@ -73,7 +73,7 @@ def test_diff1_loc():
 
 
 def test_diff1_binned_loc():
-    tracks = reader.extract_coordinates(
+    tracks = extract_coordinates(
         "data/sleap/diff1.h5",
         [
             b"head",
@@ -90,19 +90,17 @@ def test_diff1_binned_loc():
     )[0:3000]
 
     # convert to locs
-    locs = locomotion.getnLoc(tracks, nnodes=1, nfish=3)
+    locs = getnLoc(tracks, nnodes=1, nfish=3)
 
     n_bins_lin = 200
     n_bins_ang = 200
     n_bins_ori = 200
 
     # convert to binned locs
-    binned_locs = locomotion.bin_loc(locs, n_bins_lin, n_bins_ang, n_bins_ori)
+    binned_locs = bin_loc(locs, n_bins_lin, n_bins_ang, n_bins_ori)
 
     # convert back to normal locs
-    unbinned_locs = locomotion.unbin_loc(
-        binned_locs, n_bins_lin, n_bins_ang, n_bins_ori
-    )
+    unbinned_locs = unbin_loc(binned_locs, n_bins_lin, n_bins_ang, n_bins_ori)
 
     startpoints = np.array(
         [
@@ -122,8 +120,8 @@ def test_diff1_binned_loc():
     )
 
     # convert back to cartesian
-    tracks_locs = locomotion.convLocToCart(locs, startpoints)
-    tracks_unbinned_locs = locomotion.convLocToCart(unbinned_locs, startpoints)
+    tracks_locs = convLocToCart(locs, startpoints)
+    tracks_unbinned_locs = convLocToCart(unbinned_locs, startpoints)
 
     # visualization.addTracksOnTank(
     #     "videos/test/diff1_loc_direct.mp4",
@@ -131,7 +129,7 @@ def test_diff1_binned_loc():
     #     show_video_during_rendering=False,
     #     skeleton=[(0, 1)],
     # )
-    visualization.addTracksOnTank(
+    addTracksOnTank(
         "videos/test/diff1_loc_binned_unbinned.mp4",
         tracks_unbinned_locs,
         show_video_during_rendering=False,
@@ -140,4 +138,4 @@ def test_diff1_binned_loc():
 
 
 if __name__ == "__main__":
-    test_diff1_binned_loc()
+    test_diff1_loc()
