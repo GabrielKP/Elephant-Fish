@@ -108,19 +108,20 @@ def visualize_simulation(
     )
 
 
-def get_dataset(
-    config: Dict[str, Union[float, str, int]]
-) -> Tuple[Dataset, Dataset]:
+def get_dataset_single_file_fish(
+    config: Dict,
+    path_tracks: str,
+    fish: int,
+) -> Tuple[
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+]:
     # load tracks
     tracks_multi_fish = extract_coordinates(
-        config["path_tracks"],
+        path_tracks,
         [b"head", b"center"],
     )
     # merge multiple fish tracks into one
-    tracks = list()
-    for f in range(3):
-        tracks.append(tracks_multi_fish[:, 4 * f : 4 * f + 4])
-    tracks = np.concatenate(tracks, axis=0)
+    tracks = tracks_multi_fish[:, 4 * fish : 4 * fish + 4]
 
     # get binned locomotion
     loc = getnLoc(tracks, 1, nfish=1)
@@ -160,9 +161,48 @@ def get_dataset(
     train_data_wr = np.delete(wr_data, idcs_test, axis=0)
     train_label_loc = np.delete(loc_label, idcs_test, axis=0)
 
-    return WallRayDataset(
-        train_data_loc, train_data_wr, train_label_loc
-    ), WallRayDataset(test_data_loc, test_data_wr, test_label_loc)
+    return (
+        train_data_loc,
+        train_data_wr,
+        train_label_loc,
+        test_data_loc,
+        test_data_wr,
+        test_label_loc,
+    )
+
+
+def get_dataset(config: Dict):
+    paths_tracks = config["path_tracks"]
+    if isinstance(paths_tracks, str):
+        paths_tracks = [paths_tracks]
+
+    collector = list()
+    for path_tracks in paths_tracks:
+        # there is always 3 fishes in this dataset
+        for fish in range(3):
+            collector.append(
+                get_dataset_single_file_fish(config, path_tracks, fish)
+            )
+    (
+        train_data_locs,
+        train_data_wrs,
+        train_label_locs,
+        test_data_locs,
+        test_data_wrs,
+        test_label_locs,
+    ) = zip(*collector)
+
+    train_data_locs = np.concatenate(train_data_locs, axis=0)
+    train_data_wrs = np.concatenate(train_data_wrs, axis=0)
+    train_label_locs = np.concatenate(train_label_locs, axis=0)
+    test_data_locs = np.concatenate(test_data_locs, axis=0)
+    test_data_wrs = np.concatenate(test_data_wrs, axis=0)
+    test_label_locs = np.concatenate(test_label_locs, axis=0)
+
+    return (
+        WallRayDataset(train_data_locs, train_data_wrs, train_label_locs),
+        WallRayDataset(test_data_locs, test_data_wrs, test_label_locs),
+    )
 
 
 def collate_fn(
