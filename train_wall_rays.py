@@ -215,16 +215,17 @@ def train(config: Dict[str, Union[float, str, int]]):
     loss_eval = eval(test_dl, model, device)
     log.info(f"Initial eval loss: {loss_eval:2.4f}")
     start_position = np.array([647.72, 121.83, 625.18, 115.30])
-    eval_vid_path = os.path.join(config["visual_eval_dir"], "wr_before.mp4")
-    visualize_simulation(
-        config,
-        model,
-        device,
-        n_steps=300,
-        path_vid_out=eval_vid_path,
-        start_position=start_position,
-        start_locomotion=[1, 0, 0],
-    )
+    if config["visualize"]:
+        eval_vid_path = os.path.join(config["visual_eval_dir"], "wr_before.mp4")
+        visualize_simulation(
+            config,
+            model,
+            device,
+            n_steps=300,
+            path_vid_out=eval_vid_path,
+            start_position=start_position,
+            start_locomotion=[1, 0, 0],
+        )
     log.info(f"Visual evaluation saved to {eval_vid_path}")
     log.info("Starting training")
     for e in range(1, config["n_epochs"] + 1):
@@ -232,16 +233,17 @@ def train(config: Dict[str, Union[float, str, int]]):
         loss_eval = eval(test_dl, model, device)
         log.info(f"{e:3} | Train: {loss_train:2.4f} | Test: {loss_eval:2.4f}")
     log.info(f"Final eval loss: {loss_eval:2.4f}")
-    eval_vid_path = os.path.join(config["visual_eval_dir"], "wr_after.mp4")
-    visualize_simulation(
-        config,
-        model,
-        device,
-        n_steps=300,
-        path_vid_out=eval_vid_path,
-        start_position=start_position,
-        start_locomotion=[1, 0, 0],
-    )
+    if config["visualize"]:
+        eval_vid_path = os.path.join(config["visual_eval_dir"], "wr_after.mp4")
+        visualize_simulation(
+            config,
+            model,
+            device,
+            n_steps=300,
+            path_vid_out=eval_vid_path,
+            start_position=start_position,
+            start_locomotion=[1, 0, 0],
+        )
     log.info(f"Visual evaluation saved to {eval_vid_path}")
 
     model.save(config)
@@ -277,6 +279,7 @@ if __name__ == "__main__":
         "seed": 123,
         "device": "cpu",
         # visual eval
+        "visualize": True,
         "visual_eval_dir": "videos/eval/",
         "sample": True,
         "temperature": 0.6,
