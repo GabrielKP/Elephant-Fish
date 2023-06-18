@@ -201,7 +201,9 @@ def raycasts_from_tracks(
     nearest_wall : np.ndarray, shape = (n_positions, n_wallrays)
         index for which wall is the one which cross the wall ray first
     wall_distances : np.ndarray, shape = (n_positions, n_wallrays)
-
+        distance to nearest wall
+    wall_intersections : np.ndarray, shape =(n_positions, n_wallrays, 2)
+        intersection point with nearest wall
     """
     n_positions = tracks.shape[0]
 

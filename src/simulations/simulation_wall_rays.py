@@ -37,20 +37,27 @@ class SimulationWallRays:
     device: torch.device
 
     def _get_binned_wall_ray(self, oriposition: np.ndarray) -> torch.Tensor:
+        # correct input format
         tracks = np.empty((1, 4))
         tracks[0, 2:4] = oriposition[0:2]
         orientations = oriposition[2:3]
-        return torch.tensor(
+        # get raycasts
+        _, wall_distances, wall_intersections = raycasts_from_tracks(
+            tracks,
+            self.egocentric_wall_ray_orientations,
+            orientations=orientations,
+        )
+        # wall_distances.shape = (1, n_wall_rays)
+        # wall_intersections.shape = (1, n_wall_rays, 2)
+        # bin
+        binned_wall_distances = torch.tensor(
             bin_wall_rays(
-                raycasts_from_tracks(
-                    tracks,
-                    self.egocentric_wall_ray_orientations,
-                    orientations=orientations,
-                )[1],
+                wall_distances,
                 self.n_bins_wall_rays,
                 (0.0, self.max_view),
             )[0]
-        )
+        )  # shape = (n_wall_rays)
+        return binned_wall_distances, wall_distances[0], wall_intersections[0]
 
     def run(
         self,
@@ -79,12 +86,12 @@ class SimulationWallRays:
         -------
         binned_locs_out: np.ndarray, shape = (n_steps, 3)
             binned locomotion output for all steps
+        tracks: np.ndarray: shape = (n_steps + 1, 4)
+            trackset for fish center
         wall_distances: np.ndarray, shape = (n_steps, n_wall_rays)
             distance of wall rays to next wall
         wall_intersection: np.ndarray, shape = (n_stpes, n_wall_rays)
             point of intersection for each wall ray with wall
-        tracks: np.ndarray: shape = (n_steps + 1, 4)
-            trackset for fish center
         """
         start_locomotion = np.array(start_locomotion)
 
@@ -103,11 +110,16 @@ class SimulationWallRays:
         # get initial model center_head distance
         dis_CH = getDistance(*start_position)
 
+        # format oritracks = [center_x, center_y, orientation]
+        oritracks = np.empty((n_steps, 3))
         binned_locs_out = np.empty((n_steps, 3), dtype=np.int32)
-        # oritracks = [center_x, center_y, orientation]
-        oritracks = np.empty((n_steps + 1, 3))
-        oritracks[0, [0, 1]] = start_position[[2, 3]]
-        oritracks[0, 2] = getAngle(
+        wall_distances = np.empty((n_steps, self.n_wall_rays))
+        wall_intersections = np.empty((n_steps, self.n_wall_rays, 2))
+
+        # get first oritrack
+        prev_oritracks = np.empty(3)
+        prev_oritracks[0:2] = start_position[[2, 3]]
+        prev_oritracks[2] = getAngle(
             (1, 0),
             (
                 start_position[0] - start_position[2],
@@ -115,11 +127,15 @@ class SimulationWallRays:
             ),
             "radians",
         )
-        prev_oritracks = oritracks[0]
 
         for idx_step in range(n_steps):
             # 1. get wall rays
-            binned_wall_rays = self._get_binned_wall_ray(prev_oritracks)
+            (
+                binned_wall_rays,
+                wall_distance,
+                wall_intersection,
+            ) = self._get_binned_wall_ray(prev_oritracks)
+
             # 2. get fish model prediction
             with torch.no_grad():
                 logit_lin, logit_ang, logit_ori = self.model(
@@ -146,7 +162,10 @@ class SimulationWallRays:
                 binned_ang = torch.argmax(probs_ang, -1).cpu().item()
                 binned_ori = torch.argmax(probs_ori, -1).cpu().item()
 
-            # 4. save locomotion
+            # 4. update output lists
+            oritracks[idx_step] = prev_oritracks
+            wall_distances[idx_step] = wall_distance
+            wall_intersections[idx_step] = wall_intersection
             binned_locs_out[idx_step] = (
                 binned_lin,
                 binned_ang,
@@ -162,13 +181,13 @@ class SimulationWallRays:
                 n_bins_ori=self.n_bins_ori,
             )[0]
 
+            # 6. update oritracks
             prev_oritracks = row_l2c(prev_oritracks, unbinned_loc)
-            oritracks[idx_step + 1] = prev_oritracks
 
         # convert oritracks to normal tracks
         tracks = convPolarToCart(oritracks, [dis_CH])
 
-        return binned_locs_out, tracks
+        return binned_locs_out, tracks, wall_distances, wall_intersections
 
 
 def run_simulation(
@@ -177,7 +196,7 @@ def run_simulation(
     device: torch.device,
     start_position: Sequence,
     start_locomotion: Sequence,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     start_position = np.array(start_position)
     start_locomotion = np.array(start_locomotion)
 
@@ -196,7 +215,7 @@ def run_simulation(
     )
 
     # run
-    binned_loc, tracks = sim.run(
+    _, tracks, wall_distances, wall_intersections = sim.run(
         config["n_steps"],
         start_locomotion=start_locomotion,
         start_position=start_position,
@@ -204,18 +223,4 @@ def run_simulation(
         temperature=config["temperature"],
     )
 
-    # # unbin
-    # unbinned_loc = unbin_loc(
-    #     binned_locomotion=binned_loc,
-    #     n_bins_lin=model.n_bins_lin,
-    #     n_bins_ang=model.n_bins_ang,
-    #     n_bins_ori=model.n_bins_ori,
-    # )
-
-    # # to cartesian
-    # tracks = convLocToCart(
-    #     unbinned_loc,
-    #     start_positions,
-    # )
-
-    return tracks
+    return tracks, wall_distances, wall_intersections

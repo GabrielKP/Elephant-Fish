@@ -102,8 +102,8 @@ def addTracksOnTank(
     fish_point_size: Union[int, List[int]] = 1,
     show_video_during_rendering: bool = False,
     skeleton: List[Tuple[int, int]] = None,
-    wall_intersections: np.ndarray = None,
     wall_distances: np.ndarray = None,
+    wall_intersections: np.ndarray = None,
     config: Dict = {},
 ):
     """

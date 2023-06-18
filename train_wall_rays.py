@@ -87,7 +87,7 @@ def visualize_simulation(
     start_position = np.array(start_position)
     start_locomotion = np.array(start_locomotion)
 
-    tracks = run_simulation(
+    tracks, wall_distances, wall_intersections = run_simulation(
         {**config, "n_steps": n_steps},
         model=model,
         device=device,
@@ -102,6 +102,9 @@ def visualize_simulation(
         nfish=1,
         skeleton=[(0, 1)],
         fish_point_size=[1, 2],
+        wall_distances=wall_distances,
+        wall_intersections=wall_intersections,
+        config=config,
     )
 
 
